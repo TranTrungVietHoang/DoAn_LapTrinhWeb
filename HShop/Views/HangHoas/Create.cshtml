@@ -1,0 +1,103 @@
+﻿@model HShop.Data.HangHoa
+
+@{
+    ViewData["Title"] = "Tạo mới hàng hóa";
+}
+
+<h1 class="text-success mb-4">Tạo mới hàng hóa</h1>
+
+<div class="card shadow-sm p-4">
+    <form asp-action="Create" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="TenHh" class="form-label"></label>
+                <input asp-for="TenHh" class="form-control" />
+                <span asp-validation-for="TenHh" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="TenAlias" class="form-label"></label>
+                <input asp-for="TenAlias" class="form-control" />
+                <span asp-validation-for="TenAlias" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="MaLoai" class="form-label"></label>
+                <select asp-for="MaLoai" class="form-select" asp-items="ViewBag.MaLoai">
+                    <option value="">-- Chọn loại hàng --</option>
+                </select>
+                <span asp-validation-for="MaLoai" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="MaNcc" class="form-label"></label>
+                <select asp-for="MaNcc" class="form-select" asp-items="ViewBag.MaNcc">
+                    <option value="">-- Chọn nhà cung cấp --</option>
+                </select>
+                <span asp-validation-for="MaNcc" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="MoTaDonVi" class="form-label"></label>
+                <input asp-for="MoTaDonVi" class="form-control" />
+                <span asp-validation-for="MoTaDonVi" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Hình ảnh</label>
+                <input type="file" name="HinhFile" class="form-control" />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label asp-for="DonGia" class="form-label"></label>
+                <input asp-for="DonGia" class="form-control" />
+                <span asp-validation-for="DonGia" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="GiamGia" class="form-label"></label>
+                <input asp-for="GiamGia" class="form-control" />
+                <span asp-validation-for="GiamGia" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="SoLanXem" class="form-label"></label>
+                <input asp-for="SoLanXem" class="form-control" />
+                <span asp-validation-for="SoLanXem" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="NgaySx" class="form-label"></label>
+                <input asp-for="NgaySx" type="date" class="form-control" />
+                <span asp-validation-for="NgaySx" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="MoTa" class="form-label"></label>
+                <textarea asp-for="MoTa" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="MoTa" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <button type="submit" class="btn btn-success">Tạo mới</button>
+            <a asp-action="Index" class="btn btn-warning">Quay lại danh sách</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

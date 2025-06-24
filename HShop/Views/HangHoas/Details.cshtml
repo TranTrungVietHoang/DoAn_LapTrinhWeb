@@ -1,0 +1,59 @@
+﻿@model HShop.Data.HangHoa
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1 class="text-success">Chi tiết sản phẩm</h1>
+
+<div>
+    <h4>Thông tin hàng hóa</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.TenHh)</dt>
+        <dd class="col-sm-9">@Model.TenHh</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.TenAlias)</dt>
+        <dd class="col-sm-9">@Model.TenAlias</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.MoTaDonVi)</dt>
+        <dd class="col-sm-9">@Model.MoTaDonVi</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.DonGia)</dt>
+        <dd class="col-sm-9">@Model.DonGia?.ToString("N0") đ</dd>
+
+        <dt class="col-sm-3">Hình ảnh</dt>
+        <dd class="col-sm-9">
+            @if (!string.IsNullOrEmpty(Model.Hinh))
+            {
+                <img src="~/Hinh/HangHoa/@Model.Hinh" alt="@Model.TenHh" width="150" class="img-thumbnail" />
+            }
+            else
+            {
+                <span class="text-muted">Không có hình ảnh</span>
+            }
+        </dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.NgaySx)</dt>
+        <dd class="col-sm-9">@Model.NgaySx.ToString("dd/MM/yyyy")</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.GiamGia)</dt>
+        <dd class="col-sm-9">@Model.GiamGia * 100 %</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.SoLanXem)</dt>
+        <dd class="col-sm-9">@Model.SoLanXem</dd>
+
+        <dt class="col-sm-3">@Html.DisplayNameFor(model => model.MoTa)</dt>
+        <dd class="col-sm-9">@Model.MoTa</dd>
+
+        <dt class="col-sm-3">Loại hàng</dt>
+        <dd class="col-sm-9">@Model.MaLoaiNavigation?.TenLoai</dd>
+
+        <dt class="col-sm-3">Nhà cung cấp</dt>
+        <dd class="col-sm-9">@Model.MaNccNavigation?.TenCongTy</dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.MaHh" class="btn btn-warning">Sửa</a>
+    <a asp-action="Index" class="btn btn-secondary">Quay lại danh sách</a>
+</div>

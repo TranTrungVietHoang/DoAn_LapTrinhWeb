@@ -1,0 +1,64 @@
+﻿@model IEnumerable<HShop.Data.HangHoa>
+
+@{
+    ViewData["Title"] = "Danh sách hàng hóa";
+}
+
+<h1 class="text-success mb-4">Danh sách hàng hóa</h1>
+
+<div class="d-flex justify-content-end mb-3">
+    <a asp-action="Create" class="btn btn-success">+ Thêm hàng hóa</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover text-center align-middle shadow-sm">
+        <thead class="table-success">
+            <tr>
+                <th>Hình ảnh</th>
+                <th>@Html.DisplayNameFor(model => model.TenHh)</th>
+                <th>@Html.DisplayNameFor(model => model.TenAlias)</th>
+                <th>@Html.DisplayNameFor(model => model.MoTaDonVi)</th>
+                <th>@Html.DisplayNameFor(model => model.DonGia)</th>
+                <th>@Html.DisplayNameFor(model => model.NgaySx)</th>
+                <th>@Html.DisplayNameFor(model => model.GiamGia)</th>
+                <th>@Html.DisplayNameFor(model => model.SoLanXem)</th>
+                <th>@Html.DisplayNameFor(model => model.MoTa)</th>
+                <th>Loại hàng</th>
+                <th>Nhà cung cấp</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.Hinh))
+                        {
+                            <img src="~/Hinh/HangHoa/@item.Hinh" alt="@item.TenHh" width="60" height="60" class="img-thumbnail" style="object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có</span>
+                        }
+                    </td>
+                    <td>@item.TenHh</td>
+                    <td>@item.TenAlias</td>
+                    <td>@item.MoTaDonVi</td>
+                    <td>@item.DonGia?.ToString("N0") ₫</td>
+                    <td>@item.NgaySx.ToString("dd/MM/yyyy")</td>
+                    <td>@item.GiamGia.ToString("P0")</td>
+                    <td>@item.SoLanXem</td>
+                    <td>@item.MoTa</td>
+                    <td>@item.MaLoaiNavigation?.TenLoai</td>
+                    <td>@item.MaNccNavigation?.TenCongTy</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.MaHh" class="btn btn-sm btn-outline-warning mb-1">Sửa</a>
+                        <a asp-action="Details" asp-route-id="@item.MaHh" class="btn btn-sm btn-outline-info mb-1">Chi tiết</a>
+                        <a asp-action="Delete" asp-route-id="@item.MaHh" class="btn btn-sm btn-outline-danger">Xóa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
