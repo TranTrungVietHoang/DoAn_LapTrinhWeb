@@ -69,6 +69,7 @@
 									@if (User.Identity.IsAuthenticated)
 									{
 										<a asp-controller="KhachHang" asp-action="Profile" class="dropdown-item">Profile</a>
+										<a asp-controller="KhachHang" asp-action="LichSuMuaHang" class="dropdown-item">Lịch sử mua sắm</a>
 										<a asp-controller="KhachHang" asp-action="DangXuat" class="dropdown-item">Logout</a>
 									}
 									else

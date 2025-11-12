@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace HShop.Controllers
 {
@@ -135,6 +136,24 @@ namespace HShop.Controllers
         {
             await HttpContext.SignOutAsync();
             return Redirect("/");
+        }
+
+        [Authorize]
+        public IActionResult LichSuMuaHang()
+        {
+            // Lấy mã khách hàng từ claim khi đã đăng nhập
+            var maKh = User.Claims.FirstOrDefault(c => c.Type == MySetting.CLAIM_CUSTOMERID)?.Value;
+            if (string.IsNullOrEmpty(maKh))
+                return RedirectToAction("DangNhap");
+
+            // Lấy danh sách hóa đơn của khách hàng, bao gồm trạng thái
+            var hoaDons = db.HoaDons
+                .Include(hd => hd.MaTrangThaiNavigation)
+                .Where(hd => hd.MaKh == maKh)
+                .OrderByDescending(hd => hd.NgayDat)
+                .ToList();
+
+            return View(hoaDons);
         }
     }
 }
