@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace _HShop.Migrations
+namespace HShop.Migrations
 {
     [DbContext(typeof(Hshop2023Context))]
     partial class Hshop2023ContextModelSnapshot : ModelSnapshot
@@ -203,7 +203,8 @@ namespace _HShop.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("MaLoai")
+                    b.Property<int?>("MaLoai")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<string>("MaNcc")

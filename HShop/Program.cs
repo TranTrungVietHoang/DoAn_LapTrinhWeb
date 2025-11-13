@@ -6,48 +6,63 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllersWithViews();
+// ? ??c file c?u hình (appsettings.json)
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddEnvironmentVariables();
+
+// ? C?u hình DbContext
 builder.Services.AddDbContext<Hshop2023Context>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("HShop"));
+    var connectionString = builder.Configuration.GetConnectionString("HShop");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("?? Connection string 'HShop' không t?n t?i ho?c r?ng trong appsettings.json");
+    }
+
+    options.UseSqlServer(connectionString);
 });
 
-builder.Services.AddDistributedMemoryCache();
+// ? Add Controller + View
+builder.Services.AddControllersWithViews();
 
+// ? C?u hình Session
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(10);
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
-// https://docs.automapper.org/en/stable/Dependency-injection.html
+// ? C?u hình AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
-// https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-8.0
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
-{
-    options.LoginPath = "/KhachHang/DangNhap";
-    options.AccessDeniedPath = "/AccessDenied";
-});
+// ? C?u hình Cookie Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/KhachHang/DangNhap";
+        options.AccessDeniedPath = "/AccessDenied";
+    });
 
-// ??ng ký PaypalClient d?ng Singleton() - ch? có 1 instance duy nh?t trong toàn ?ng d?ng
+// ? ??ng ký Paypal client (Singleton)
 builder.Services.AddSingleton(x => new PaypalClient(
-        builder.Configuration["PaypalOptions:AppId"],
-        builder.Configuration["PaypalOptions:AppSecret"],
-        builder.Configuration["PaypalOptions:Mode"]
+    builder.Configuration["PaypalOptions:AppId"],
+    builder.Configuration["PaypalOptions:AppSecret"],
+    builder.Configuration["PaypalOptions:Mode"]
 ));
 
+// ? ??ng ký VnPay service
 builder.Services.AddSingleton<IVnPayService, VnPayService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ? C?u hình pipeline HTTP
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -57,13 +72,16 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseSession();
-
 app.UseAuthentication();
-
 app.UseAuthorization();
 
+// ? ??nh tuy?n
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+);
+
+// ? Log connection string ra console (debug)
+Console.WriteLine($"? ?ang s? d?ng ConnectionString: {builder.Configuration.GetConnectionString("HShop")}");
 
 app.Run();
