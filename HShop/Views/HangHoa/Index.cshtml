@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<HShop.ViewModels.HangHoaVM>
 
 @{
-	ViewData["Title"] = "Index";
+	ViewData["Title"] = "Shop";
 	Layout = "_DanhSachHangHoa";
 }
 
@@ -16,23 +16,77 @@
 	</div>
 }
 
-<!-- Gói sản phẩm trong row -->
+<!-- ======== DANH SÁCH SẢN PHẨM ======== -->
 <div class="container py-5">
 	<div class="row g-4">
-		@await Html.PartialAsync("ProductItem", Model)
+		@foreach (var item in Model)
+		{
+			<div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+				<div class="card text-center border-0 shadow-sm p-2 h-100">
+					<img src="~/Hinh/HangHoa/@item.Hinh" alt="@item.TenHH"
+						 class="card-img-top" style="height:250px; object-fit:cover; border-radius:10px;" />
+					<div class="card-body">
+						<h6 class="card-title fw-bold text-truncate">@item.TenHH</h6>
+						<p class="text-success fw-semibold mb-1">@item.DonGia.ToString("N0") ₫</p>
+						<a asp-controller="HangHoa" asp-action="Detail" asp-route-id="@item.MaHh"
+						   class="btn btn-outline-primary btn-sm rounded-pill px-3">
+							Xem chi tiết
+						</a>
+					</div>
+				</div>
+			</div>
+		}
 	</div>
+
+	<!-- ======== PHÂN TRANG ======== -->
+	@if (ViewBag.TotalPages > 1)
+	{
+		<div class="col-12">
+			<div class="pagination d-flex justify-content-center mt-5">
+				@if (ViewBag.CurrentPage > 1)
+				{
+					<a href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1, loai = ViewBag.Loai, minPrice = ViewBag.MinPrice, maxPrice = ViewBag.MaxPrice, filter = ViewBag.Filter })" class="rounded">&laquo;</a>
+				}
+				@for (int i = 1; i <= ViewBag.TotalPages; i++)
+				{
+					if (i == ViewBag.CurrentPage)
+					{
+						<a href="#" class="rounded active">@i</a>
+					}
+					else
+					{
+						<a href="@Url.Action("Index", new { page = i, loai = ViewBag.Loai, minPrice = ViewBag.MinPrice, maxPrice = ViewBag.MaxPrice, filter = ViewBag.Filter })" class="rounded">@i</a>
+					}
+				}
+				@if (ViewBag.CurrentPage < ViewBag.TotalPages)
+				{
+					<a href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1, loai = ViewBag.Loai, minPrice = ViewBag.MinPrice, maxPrice = ViewBag.MaxPrice, filter = ViewBag.Filter })" class="rounded">&raquo;</a>
+				}
+			</div>
+		</div>
+	}
 </div>
 
-<!-- Phân trang -->
-<div class="col-12">
-	<div class="pagination d-flex justify-content-center mt-5">
-		<a href="#" class="rounded">&laquo;</a>
-		<a href="#" class="active rounded">1</a>
-		<a href="#" class="rounded">2</a>
-		<a href="#" class="rounded">3</a>
-		<a href="#" class="rounded">4</a>
-		<a href="#" class="rounded">5</a>
-		<a href="#" class="rounded">6</a>
-		<a href="#" class="rounded">&raquo;</a>
-	</div>
-</div>
+<!-- ======== CSS PHÂN TRANG ======== -->
+<style>
+	.pagination a {
+		color: #333;
+		padding: 8px 14px;
+		margin: 0 4px;
+		border: 1px solid #ccc;
+		text-decoration: none;
+		border-radius: 5px;
+		transition: background 0.2s;
+	}
+
+		.pagination a.active {
+			background-color: #198754;
+			color: #fff;
+			border-color: #198754;
+		}
+
+		.pagination a:hover {
+			background-color: #0d6efd;
+			color: #fff;
+		}
+</style>

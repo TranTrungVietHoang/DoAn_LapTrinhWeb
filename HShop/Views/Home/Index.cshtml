@@ -1,8 +1,91 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
+    Layout = "_LayoutCustomer";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- HERO SECTION -->
+<div class="container-fluid hero-banner py-5 mb-5 text-center text-white">
+    <div class="container py-5">
+        <h1 class="display-3 fw-bold mb-3 animate__animated animate__fadeInDown">
+            Chào mừng đến với <span class="text-warning">Fruitables</span> 🍎
+        </h1>
+        <p class="lead mb-4 animate__animated animate__fadeInUp">
+            Cửa hàng chuyên cung cấp <strong>trái cây tươi ngon</strong>, an toàn và tốt cho sức khỏe mỗi ngày.
+        </p>
+        <a href="/HangHoa" class="btn btn-lg btn-light rounded-pill px-5 py-3 shadow-sm animate__animated animate__fadeInUp">
+            Mua sắm ngay <i class="fa fa-shopping-bag ms-2"></i>
+        </a>
+    </div>
 </div>
+
+<!-- CSS -->
+<style>
+    .hero-banner {
+        background: linear-gradient(135deg, rgba(76, 175, 80, 0.9), rgba(139, 195, 74, 0.9)), url('/img/banner-fruits.jpg') center/cover no-repeat;
+        min-height: 480px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+        .hero-banner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+
+        .hero-banner h1 span {
+            color: #ffeb3b;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-banner p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-banner .btn-light {
+            background-color: #fff;
+            color: #2e7d32;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .hero-banner .btn-light:hover {
+                background-color: #43a047;
+                color: #fff;
+                transform: scale(1.05);
+            }
+
+    /* Responsive fix */
+    @@media (max-width: 768px) {
+        .hero-banner {
+            min-height: 380px;
+            padding: 40px 0;
+        }
+
+            .hero-banner h1 {
+                font-size: 2rem;
+            }
+
+            .hero-banner p {
+                font-size: 1rem;
+                padding: 0 10px;
+            }
+
+            .hero-banner .btn {
+                padding: 10px 25px;
+                font-size: 1rem;
+            }
+    }
+</style>
+
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
