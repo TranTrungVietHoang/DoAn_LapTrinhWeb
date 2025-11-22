@@ -53,6 +53,8 @@ namespace HShop.Data
 
         public virtual DbSet<YeuThich> YeuThiches { get; set; }
 
+        public virtual DbSet<Comment> Comments { get; set; }
+
         //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         //        => optionsBuilder.UseSqlServer("Server=.;Database=Hshop2023;Integrated Security=True;Trust Server Certificate=True");
@@ -442,6 +444,24 @@ namespace HShop.Data
                     .HasForeignKey(d => d.MaKh)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_Favorites_Customers");
+            });
+
+            modelBuilder.Entity<Comment>(entity =>
+            {
+                entity.HasKey(e => e.CommentId);
+
+                entity.ToTable("Comment");
+
+                entity.Property(e => e.MaKH)
+                    .HasMaxLength(50);
+
+                entity.HasOne(e => e.MaHHNavigation)
+                    .WithMany(p => p.Comments)
+                    .HasForeignKey(e => e.MaHH);
+
+                entity.HasOne(e => e.MaKHNavigation)
+                    .WithMany(p => p.Comments)
+                    .HasForeignKey(e => e.MaKH);
             });
 
             OnModelCreatingPartial(modelBuilder);

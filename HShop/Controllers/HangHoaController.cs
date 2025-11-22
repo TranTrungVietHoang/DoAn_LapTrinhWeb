@@ -131,7 +131,7 @@ namespace HShop.Controllers
         }
 
        
-        public IActionResult Detail(int id)
+        public async Task<IActionResult> Detail(int id)
         {
             var data = db.HangHoas
                 .Include(p => p.MaLoaiNavigation)
@@ -144,6 +144,20 @@ namespace HShop.Controllers
                 return Redirect("/404");
             }
 
+            // Tính trung bình rating và tổng số đánh giá
+            var comments = await db.Comments
+                .Where(x => x.MaHH == id)
+                .OrderByDescending(x => x.CreatedDate)
+                .ToListAsync();
+
+            double averageRating = 0;
+            int totalReviews = comments.Count;
+
+            if (totalReviews > 0)
+            {
+                averageRating = comments.Average(c => c.Rating);
+            }
+
             var result = new ChiTietHangHoaVM
             {
                 MaHh = data.MaHh,
@@ -154,10 +168,74 @@ namespace HShop.Controllers
                 MoTaNgan = data.MoTaDonVi ?? string.Empty,
                 TenLoai = data.MaLoaiNavigation.TenLoai,
                 SoLuongTon = 10,
-                DiemDanhGia = 5
+                DiemDanhGia = 5,
+                AverageRating = averageRating,
+                TotalReviews = totalReviews
             };
 
-            
+            // Load comments với thông tin khách hàng
+            var commentDisplayList = await db.Comments
+                .Where(x => x.MaHH == id)
+                .Include(x => x.MaKHNavigation)
+                .OrderByDescending(x => x.CreatedDate)
+                .Select(c => new ViewModels.CommentDisplayViewModel
+                {
+                    CommentId = c.CommentId,
+                    CustomerName = c.MaKHNavigation.HoTen,
+                    CustomerAvatar = c.MaKHNavigation.Hinh ?? "Photo.gif",
+                    Rating = c.Rating,
+                    Content = c.Content,
+                    ImagePath = c.ImagePath,
+                    CreatedDate = c.CreatedDate
+                })
+                .ToListAsync();
+
+            ViewBag.Comments = commentDisplayList;
+
+            // Kiểm tra điều kiện đánh giá cho user hiện tại
+            bool canReview = false;
+            int remainingReviews = 0;
+            string reviewMessage = "";
+
+            if (User.Identity.IsAuthenticated)
+            {
+                string maKH = User.Identity.Name;
+
+                // Đếm số lần mua
+                int purchaseCount = await db.ChiTietHds
+                    .Where(x => x.MaHh == id && x.MaHdNavigation.MaKh == maKH)
+                    .CountAsync();
+
+                // Đếm số lần đã đánh giá
+                int reviewCount = await db.Comments
+                    .Where(x => x.MaHH == id && x.MaKH == maKH)
+                    .CountAsync();
+
+                remainingReviews = purchaseCount - reviewCount;
+
+                if (purchaseCount == 0)
+                {
+                    reviewMessage = "Bạn cần mua sản phẩm này để có thể đánh giá.";
+                }
+                else if (reviewCount >= purchaseCount)
+                {
+                    reviewMessage = "Bạn đã đánh giá đủ số lần cho phép.";
+                }
+                else
+                {
+                    canReview = true;
+                    reviewMessage = $"Bạn có thể đánh giá thêm {remainingReviews} lần.";
+                }
+            }
+            else
+            {
+                reviewMessage = "Vui lòng đăng nhập để đánh giá sản phẩm.";
+            }
+
+            ViewBag.CanReview = canReview;
+            ViewBag.RemainingReviews = remainingReviews;
+            ViewBag.ReviewMessage = reviewMessage;
+
             var related = db.HangHoas
                 .Where(p => p.MaLoai == data.MaLoai && p.MaHh != id)
                 .Take(4)
@@ -172,7 +250,6 @@ namespace HShop.Controllers
 
             ViewBag.RelatedProducts = related;
 
-           
             var featured = db.HangHoas
                 .OrderByDescending(p => p.DonGia) // hoặc đổi thành theo lượt xem, ngày tạo, v.v.
                 .Take(5)

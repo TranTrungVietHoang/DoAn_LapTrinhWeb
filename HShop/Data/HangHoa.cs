@@ -54,4 +54,7 @@ public partial class HangHoa
     public virtual ICollection<BanBe> BanBes { get; set; } = new List<BanBe>();
     public virtual ICollection<ChiTietHd> ChiTietHds { get; set; } = new List<ChiTietHd>();
     public virtual ICollection<YeuThich> YeuThiches { get; set; } = new List<YeuThich>();
+
+    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
 }
