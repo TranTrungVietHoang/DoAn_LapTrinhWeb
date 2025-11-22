@@ -21,5 +21,7 @@
 		public string ChiTiet { get; set; }
 		public int DiemDanhGia { get; set; }
 		public int SoLuongTon { get; set; }
+		public double AverageRating { get; set; }
+		public int TotalReviews { get; set; }
 	}
 }

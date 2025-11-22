@@ -31,12 +31,19 @@
                         <h4 class="fw-bold mb-3">@Model.TenHH</h4>
                         <p class="mb-3">Category: @Model.TenLoai</p>
                         <h5 class="fw-bold mb-3">$ @Model.DonGia</h5>
-                        <div class="d-flex mb-4">
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star text-secondary"></i>
-                            <i class="fa fa-star"></i>
+                        <div class="d-flex align-items-center mb-4">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Round(Model.AverageRating))
+                                {
+                                    <i class="fa fa-star text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-star text-muted"></i>
+                                }
+                            }
+                            <span class="ms-2 text-muted">(@Model.AverageRating.ToString("F1") sao - @Model.TotalReviews đánh giá)</span>
                         </div>
                         <p class="mb-4">@Model.MoTaNgan</p>
                         <form asp-action="AddToCart" asp-controller="Cart" asp-route-id="@Model.MaHh">
@@ -78,84 +85,133 @@
                                 @Model.ChiTiet
                             </div>
                             <div class="tab-pane" id="nav-mission" role="tabpanel" aria-labelledby="nav-mission-tab">
-                                <div class="d-flex">
-                                    <img src="img/avatar.jpg" class="img-fluid rounded-circle p-3" style="width: 100px; height: 100px;" alt="">
-                                    <div class="">
-                                        <p class="mb-2" style="font-size: 14px;">April 12, 2024</p>
-                                        <div class="d-flex justify-content-between">
-                                            <h5>Jason Smith</h5>
-                                            <div class="d-flex mb-3">
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star"></i>
+                                @if (ViewBag.Comments != null && ((List<HShop.ViewModels.CommentDisplayViewModel>)ViewBag.Comments).Count > 0)
+                                {
+                                    foreach (var comment in (List<HShop.ViewModels.CommentDisplayViewModel>)ViewBag.Comments)
+                                    {
+                                        <div class="d-flex mb-4 pb-3 border-bottom">
+                                            <img src="~/Hinh/KhachHang/@comment.CustomerAvatar" 
+                                                 class="img-fluid rounded-circle" 
+                                                 style="width: 80px; height: 80px; object-fit: cover;" 
+                                                 alt="@comment.CustomerName"
+                                                 onerror="this.src='/Hinh/KhachHang/Photo.gif'">
+                                            <div class="ms-3 flex-grow-1">
+                                                <p class="mb-2 text-muted" style="font-size: 14px;">@comment.CreatedDate.ToString("dd/MM/yyyy HH:mm")</p>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <h6 class="mb-0 fw-bold">@comment.CustomerName</h6>
+                                                    <div class="d-flex">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            if (i <= comment.Rating)
+                                                            {
+                                                                <i class="fa fa-star text-warning"></i>
+                                                            }
+                                                            else
+                                                            {
+                                                                <i class="fa fa-star text-muted"></i>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <p class="mb-2">@comment.Content</p>
+                                                @if (!string.IsNullOrEmpty(comment.ImagePath))
+                                                {
+                                                    <div class="mt-2">
+                                                        <img src="@comment.ImagePath" 
+                                                             class="img-fluid rounded" 
+                                                             style="max-width: 300px; max-height: 300px; object-fit: cover;" 
+                                                             alt="Review image">
+                                                        </div>
+                                                }
                                             </div>
                                         </div>
-                                        <p>
-                                            The generated Lorem Ipsum is therefore always free from repetition injected humour, or non-characteristic
-                                            words etc. Susp endisse ultricies nisi vel quam suscipit
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="d-flex">
-                                    <img src="img/avatar.jpg" class="img-fluid rounded-circle p-3" style="width: 100px; height: 100px;" alt="">
-                                    <div class="">
-                                        <p class="mb-2" style="font-size: 14px;">April 12, 2024</p>
-                                        <div class="d-flex justify-content-between">
-                                            <h5>Sam Peters</h5>
-                                            <div class="d-flex mb-3">
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star text-secondary"></i>
-                                                <i class="fa fa-star"></i>
-                                                <i class="fa fa-star"></i>
-                                            </div>
-                                        </div>
-                                        <p class="text-dark">
-                                            The generated Lorem Ipsum is therefore always free from repetition injected humour, or non-characteristic
-                                            words etc. Susp endisse ultricies nisi vel quam suscipit
-                                        </p>
-                                    </div>
-                                </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
+                                }
                             </div>
                         </div>
                     </div>
-                    <form action="#">
-                        <h4 class="mb-5 fw-bold">Leave a Reply</h4>
-                        <div class="row g-4">
-                            <div class="col-lg-6">
-                                <div class="border-bottom rounded">
-                                    <input type="text" class="form-control border-0 me-4" placeholder="Your Name *">
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="border-bottom rounded">
-                                    <input type="email" class="form-control border-0" placeholder="Your Email *">
-                                </div>
-                            </div>
-                            <div class="col-lg-12">
-                                <div class="border-bottom rounded my-4">
-                                    <textarea name="" id="" class="form-control border-0" cols="30" rows="8" placeholder="Your Review *" spellcheck="false"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-lg-12">
-                                <div class="d-flex justify-content-between py-3 mb-5">
-                                    <div class="d-flex align-items-center">
-                                        <p class="mb-0 me-3">Please rate:</p>
-                                        <div class="d-flex align-items-center" style="font-size: 12px;">
-                                            <i class="fa fa-star text-muted"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                            <i class="fa fa-star"></i>
-                                        </div>
-                                    </div>
-                                    <a href="#" class="btn border border-secondary text-primary rounded-pill px-4 py-3">Post Comment</a>
-                                </div>
-                            </div>
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
-                    </form>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <h4 class="mb-4 fw-bold">Đánh giá sản phẩm</h4>
+                    
+                    @if (ViewBag.CanReview)
+                    {
+                        <div class="alert alert-info mb-4">
+                            <i class="fa fa-info-circle me-2"></i>@ViewBag.ReviewMessage
+                        </div>
+                        
+                        <form asp-action="Create" asp-controller="Comment" method="post" enctype="multipart/form-data" id="reviewForm">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="MaHH" value="@Model.MaHh" />
+                            <input type="hidden" name="Rating" id="ratingValue" value="5" />
+                            
+                            <div class="row g-4">
+                                <div class="col-lg-12">
+                                    <div class="border-bottom rounded my-3">
+                                        <textarea name="Content" 
+                                                  class="form-control border-0" 
+                                                  cols="30" 
+                                                  rows="6" 
+                                                  placeholder="Nhập nội dung đánh giá của bạn..." 
+                                                  required></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-12">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Hình ảnh sản phẩm (tùy chọn)</label>
+                                        <input type="file" 
+                                               name="ImageUpload" 
+                                               class="form-control" 
+                                               accept="image/*"
+                                               id="imageUpload">
+                                        <small class="text-muted">Chấp nhận: JPG, JPEG, PNG, GIF. Tối đa 5MB</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-lg-12">
+                                    <div class="d-flex justify-content-between align-items-center py-3 mb-4">
+                                        <div class="d-flex align-items-center">
+                                            <p class="mb-0 me-3 fw-semibold">Đánh giá của bạn:</p>
+                                            <div class="rating-stars" id="ratingStars">
+                                                <i class="fa fa-star" data-rating="1"></i>
+                                                <i class="fa fa-star" data-rating="2"></i>
+                                                <i class="fa fa-star" data-rating="3"></i>
+                                                <i class="fa fa-star" data-rating="4"></i>
+                                                <i class="fa fa-star" data-rating="5"></i>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn border border-secondary text-primary rounded-pill px-4 py-3">
+                                            <i class="fa fa-paper-plane me-2"></i>Gửi đánh giá
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fa fa-exclamation-triangle me-2"></i>@ViewBag.ReviewMessage
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -247,4 +303,32 @@
         border-radius: 8px;
         transition: 0.2s ease-in-out;
     }
+
+    /* Rating stars styling */
+    .rating-stars {
+        display: inline-flex;
+        gap: 5px;
+        font-size: 24px;
+    }
+
+    .rating-stars .fa-star {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .rating-stars .fa-star:hover {
+        transform: scale(1.2);
+    }
+
+    .rating-stars .fa-star.text-warning {
+        color: #ffc107 !important;
+    }
+
+    .rating-stars .fa-star.text-muted {
+        color: #dee2e6 !important;
+    }
 </style>
+
+@section Scripts {
+    <script src="~/js/comment-rating.js"></script>
+}

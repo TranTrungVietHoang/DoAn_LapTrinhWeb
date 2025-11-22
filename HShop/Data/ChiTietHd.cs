@@ -18,6 +18,7 @@ public partial class ChiTietHd
 
     public double GiamGia { get; set; }
 
+
     public virtual HoaDon MaHdNavigation { get; set; } = null!;
 
     public virtual HangHoa MaHhNavigation { get; set; } = null!;
