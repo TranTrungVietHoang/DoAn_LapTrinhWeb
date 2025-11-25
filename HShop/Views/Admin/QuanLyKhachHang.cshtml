@@ -1,0 +1,50 @@
+﻿@model IEnumerable<HShop.Data.KhachHang>
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+}
+
+<h2 class="text-center mt-4">Quản lý khách hàng</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-bordered table-striped mt-3">
+    <thead class="table-success">
+        <tr>
+            <th>Mã KH</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th>Điện thoại</th>
+            <th>Trạng thái</th>
+            <th>Vai trò</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var kh in Model)
+        {
+            <tr>
+                <td>@kh.MaKh</td>
+                <td>@kh.HoTen</td>
+                <td>@kh.Email</td>
+                <td>@kh.DienThoai</td>
+                <td>@(kh.HieuLuc ? "Hoạt động" : "Bị khóa")</td>
+                <td>@(kh.VaiTro == 1 ? "Admin" : "Khách hàng")</td>
+                <td>
+                    <form asp-action="KhoaTaiKhoan" method="post" style="display:inline">
+                        <input type="hidden" name="maKh" value="@kh.MaKh" />
+                        <button type="submit" class="btn @(kh.HieuLuc ? "btn-danger" : "btn-success") btn-sm">
+                            @(kh.HieuLuc ? "Khóa" : "Mở khóa")
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

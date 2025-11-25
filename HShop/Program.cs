@@ -1,4 +1,4 @@
-using HShop.Data;
+﻿using HShop.Data;
 using HShop.Helpers;
 using HShop.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -6,28 +6,36 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ? ??c file c?u h�nh (appsettings.json)
+// =============================
+// 1️⃣ Đọc file cấu hình (appsettings.json)
+// =============================
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddEnvironmentVariables();
 
-// ? C?u h�nh DbContext
+// =============================
+// 2️⃣ Cấu hình DbContext
+// =============================
 builder.Services.AddDbContext<Hshop2023Context>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("HShop");
     if (string.IsNullOrEmpty(connectionString))
     {
-        throw new InvalidOperationException("?? Connection string 'HShop' kh�ng t?n t?i ho?c r?ng trong appsettings.json");
+        throw new InvalidOperationException("❌ Connection string 'HShop' không tồn tại hoặc rỗng trong appsettings.json");
     }
 
     options.UseSqlServer(connectionString);
 });
 
-// ? Add Controller + View
+// =============================
+// 3️⃣ Add Controller + View
+// =============================
 builder.Services.AddControllersWithViews();
 
-// ? C?u h�nh Session
+// =============================
+// 4️⃣ Cấu hình Session
+// =============================
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -36,30 +44,46 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// ? C?u h�nh AutoMapper
+// =============================
+// 5️⃣ Cấu hình AutoMapper
+// =============================
 builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
 
-// ? C?u h�nh Cookie Authentication
+// =============================
+// 6️⃣ Cấu hình Cookie Authentication (ĐĂNG NHẬP / PHÂN QUYỀN)
+// =============================
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/KhachHang/DangNhap";
-        options.AccessDeniedPath = "/AccessDenied";
+        options.LoginPath = "/KhachHang/DangNhap";        // Trang đăng nhập
+        options.LogoutPath = "/KhachHang/DangXuat";       // Trang đăng xuất
+        options.AccessDeniedPath = "/KhachHang/AccessDenied"; // Trang bị từ chối truy cập
+        options.ExpireTimeSpan = TimeSpan.FromHours(2);   // Cookie tồn tại 2h
+        options.SlidingExpiration = true;                 // Tự gia hạn khi còn hạn
     });
 
-// ? ??ng k� Paypal client (Singleton)
+// ✅ Bật phân quyền
+builder.Services.AddAuthorization();
+
+// =============================
+// 7️⃣ Đăng ký Paypal client (Singleton)
+// =============================
 builder.Services.AddSingleton(x => new PaypalClient(
     builder.Configuration["PaypalOptions:AppId"],
     builder.Configuration["PaypalOptions:AppSecret"],
     builder.Configuration["PaypalOptions:Mode"]
 ));
 
-// ? ??ng k� VnPay service
+// =============================
+// 8️⃣ Đăng ký VnPay service
+// =============================
 builder.Services.AddSingleton<IVnPayService, VnPayService>();
 
 var app = builder.Build();
 
-// ? C?u h�nh pipeline HTTP
+// =============================
+// 9️⃣ Cấu hình pipeline HTTP
+// =============================
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -71,17 +95,22 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// ✅ Bắt buộc: Session + Auth + Authorization
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ? ??nh tuy?n
+// =============================
+// 🔟 Định tuyến mặc định
+// =============================
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}"
 );
 
-// ? Log connection string ra console (debug)
-Console.WriteLine($"? ?ang s? d?ng ConnectionString: {builder.Configuration.GetConnectionString("HShop")}");
+// =============================
+// 11️⃣ Log connection string ra console (debug)
+// =============================
+Console.WriteLine($"✅ Đang sử dụng ConnectionString: {builder.Configuration.GetConnectionString("HShop")}");
 
 app.Run();

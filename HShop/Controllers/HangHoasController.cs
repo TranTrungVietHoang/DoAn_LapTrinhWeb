@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -50,6 +49,11 @@ namespace HShop.Controllers
         {
             ViewData["MaLoai"] = new SelectList(_context.Loais, "MaLoai", "TenLoai");
             ViewData["MaNcc"] = new SelectList(_context.NhaCungCaps, "MaNcc", "TenCongTy");
+
+            // ✅ THÊM ĐOẠN NÀY ĐỂ TRÁNH LỖI NullReference Ở VIEW
+            TempData["Success"] = TempData.ContainsKey("Success") ? TempData["Success"] : "";
+            TempData["Error"] = TempData.ContainsKey("Error") ? TempData["Error"] : "";
+
             return View();
         }
 
@@ -111,6 +115,11 @@ namespace HShop.Controllers
 
             ViewData["MaLoai"] = new SelectList(_context.Loais, "MaLoai", "TenLoai", hangHoa.MaLoai);
             ViewData["MaNcc"] = new SelectList(_context.NhaCungCaps, "MaNcc", "TenCongTy", hangHoa.MaNcc);
+
+            // ✅ Giúp tránh lỗi null nếu view dùng TempData
+            TempData["Success"] = TempData.ContainsKey("Success") ? TempData["Success"] : "";
+            TempData["Error"] = TempData.ContainsKey("Error") ? TempData["Error"] : "";
+
             return View(hangHoa);
         }
 

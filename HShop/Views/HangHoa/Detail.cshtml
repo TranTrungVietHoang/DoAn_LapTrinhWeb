@@ -210,6 +210,18 @@
                     {
                         <div class="alert alert-warning" role="alert">
                             <i class="fa fa-exclamation-triangle me-2"></i>@ViewBag.ReviewMessage
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <hr/>
+                                <small>
+                                    <strong>🔍 DEBUG:</strong><br/>
+                                    User Identity: @ViewBag.DebugUserIdentity<br/>
+                                    MaKH (từ DB): @ViewBag.DebugMaKH<br/>
+                                    MaHH: @ViewBag.DebugMaHH<br/>
+                                    Số lần mua: @ViewBag.DebugPurchaseCount<br/>
+                                    Đã đánh giá: @ViewBag.DebugReviewCount
+                                </small>
+                            }
                         </div>
                     }
                 </div>

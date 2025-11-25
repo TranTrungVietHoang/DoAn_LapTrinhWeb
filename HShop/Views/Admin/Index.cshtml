@@ -1,0 +1,30 @@
+﻿@{
+    ViewData["Title"] = "Trang quản trị hệ thống";
+}
+
+<div class="container mt-5">
+    <h2 class="fw-bold text-center text-success mb-4">Trang quản trị hệ thống</h2>
+
+    <div class="row g-4 text-center">
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="QuanLyHangHoa" class="btn btn-outline-primary w-100 p-4 rounded-3 shadow-sm">
+                <i class="fa fa-cubes me-2"></i> Quản lý hàng hóa
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="QuanLyKhachHang" class="btn btn-outline-success w-100 p-4 rounded-3 shadow-sm">
+                <i class="fa fa-users me-2"></i> Quản lý khách hàng
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="QuanLyDonHang" class="btn btn-outline-warning w-100 p-4 rounded-3 shadow-sm">
+                <i class="fa fa-shopping-cart me-2"></i> Quản lý đơn hàng
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="QuanLyBinhLuan" class="btn btn-outline-info w-100 p-4 rounded-3 shadow-sm">
+                <i class="fa fa-comments me-2"></i> Quản lý bình luận
+            </a>
+        </div>
+    </div>
+</div>

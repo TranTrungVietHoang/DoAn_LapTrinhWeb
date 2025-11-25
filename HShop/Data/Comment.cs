@@ -11,6 +11,7 @@ namespace HShop.Data
         public string Content { get; set; }
         public string ImagePath { get; set; }
         public DateTime CreatedDate { get; set; }
+        public bool IsHidden { get; set; } = false;  // ✅ Cho phép Admin ẩn bình luận
 
         public virtual HangHoa MaHHNavigation { get; set; }
         public virtual KhachHang MaKHNavigation { get; set; }

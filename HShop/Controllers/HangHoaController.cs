@@ -146,7 +146,7 @@ namespace HShop.Controllers
 
             // Tính trung bình rating và tổng số đánh giá
             var comments = await db.Comments
-                .Where(x => x.MaHH == id)
+                .Where(x => x.MaHH == id && !x.IsHidden)  // ✅ Chỉ lấy bình luận chưa bị ẩn
                 .OrderByDescending(x => x.CreatedDate)
                 .ToListAsync();
 
@@ -175,7 +175,7 @@ namespace HShop.Controllers
 
             // Load comments với thông tin khách hàng
             var commentDisplayList = await db.Comments
-                .Where(x => x.MaHH == id)
+                .Where(x => x.MaHH == id && !x.IsHidden)  // ✅ Chỉ lấy bình luận chưa bị ẩn
                 .Include(x => x.MaKHNavigation)
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(c => new ViewModels.CommentDisplayViewModel
@@ -199,32 +199,65 @@ namespace HShop.Controllers
 
             if (User.Identity.IsAuthenticated)
             {
-                string maKH = User.Identity.Name;
+                string userIdentity = User.Identity.Name;
 
-                // Đếm số lần mua
-                int purchaseCount = await db.ChiTietHds
-                    .Where(x => x.MaHh == id && x.MaHdNavigation.MaKh == maKH)
-                    .CountAsync();
+                // 🔍 Tìm khách hàng từ username hoặc email
+                var khachHang = await db.KhachHangs
+                    .FirstOrDefaultAsync(k => 
+                        k.MaKh == userIdentity ||      // MaKH khớp trực tiếp
+                        k.Email == userIdentity ||     // Hoặc email khớp
+                        k.HoTen == userIdentity);      // Hoặc username khớp với HoTen
 
-                // Đếm số lần đã đánh giá
-                int reviewCount = await db.Comments
-                    .Where(x => x.MaHH == id && x.MaKH == maKH)
-                    .CountAsync();
-
-                remainingReviews = purchaseCount - reviewCount;
-
-                if (purchaseCount == 0)
+                if (khachHang == null)
                 {
-                    reviewMessage = "Bạn cần mua sản phẩm này để có thể đánh giá.";
-                }
-                else if (reviewCount >= purchaseCount)
-                {
-                    reviewMessage = "Bạn đã đánh giá đủ số lần cho phép.";
+                    reviewMessage = "Không tìm thấy thông tin khách hàng.";
                 }
                 else
                 {
-                    canReview = true;
-                    reviewMessage = $"Bạn có thể đánh giá thêm {remainingReviews} lần.";
+                    string maKH = khachHang.MaKh;  // ✅ Lấy MaKH từ database
+
+                    // 🔍 DEBUG: Thêm để kiểm tra
+                    ViewBag.DebugUserIdentity = userIdentity;
+                    ViewBag.DebugMaKH = maKH;
+                    ViewBag.DebugMaHH = id;
+
+                    // Đếm số lần mua
+                    int purchaseCount = await db.ChiTietHds
+                        .Where(x => x.MaHh == id && x.MaHdNavigation.MaKh == maKH)
+                        .CountAsync();
+
+                    // 🔍 DEBUG: Kiểm tra tất cả đơn hàng của user
+                    var allPurchases = await db.ChiTietHds
+                        .Include(x => x.MaHdNavigation)
+                        .Where(x => x.MaHdNavigation.MaKh == maKH)
+                        .Select(x => new { x.MaHh, x.MaHdNavigation.MaKh })
+                        .ToListAsync();
+                    ViewBag.DebugAllPurchases = allPurchases;
+
+                    // Đếm số lần đã đánh giá
+                    int reviewCount = await db.Comments
+                        .Where(x => x.MaHH == id && x.MaKH == maKH)
+                        .CountAsync();
+
+                    // 🔍 DEBUG
+                    ViewBag.DebugPurchaseCount = purchaseCount;
+                    ViewBag.DebugReviewCount = reviewCount;
+
+                    remainingReviews = purchaseCount - reviewCount;
+
+                    if (purchaseCount == 0)
+                    {
+                        reviewMessage = "Bạn cần mua sản phẩm này để có thể đánh giá.";
+                    }
+                    else if (reviewCount >= purchaseCount)
+                    {
+                        reviewMessage = "Bạn đã đánh giá đủ số lần cho phép.";
+                    }
+                    else
+                    {
+                        canReview = true;
+                        reviewMessage = $"Bạn có thể đánh giá thêm {remainingReviews} lần.";
+                    }
                 }
             }
             else

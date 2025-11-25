@@ -1,0 +1,211 @@
+@model IEnumerable<HShop.Data.Comment>
+
+@{
+    ViewData["Title"] = "Quản lý bình luận";
+}
+
+<h1 class="text-primary mb-4">📝 Quản lý bình luận</h1>
+
+<!-- Thông báo -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Thống kê -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">Tổng bình luận</h5>
+                <h2 class="display-4">@Model.Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">Hiển thị</h5>
+                <h2 class="display-4">@Model.Count(c => !c.IsHidden)</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">Đã ẩn</h5>
+                <h2 class="display-4">@Model.Count(c => c.IsHidden)</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bảng danh sách -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover text-center align-middle shadow-sm">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Sản phẩm</th>
+                <th>Khách hàng</th>
+                <th>Đánh giá</th>
+                <th>Nội dung</th>
+                <th>Hình ảnh</th>
+                <th>Ngày tạo</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                foreach (var comment in Model)
+                {
+                    <tr class="@(comment.IsHidden ? "table-secondary" : "")">
+                        <td>@comment.CommentId</td>
+                        <td>
+                            <strong>@comment.MaHHNavigation?.TenHh</strong><br/>
+                            <small class="text-muted">MaHH: @comment.MaHH</small>
+                        </td>
+                        <td>
+                            <strong>@comment.MaKHNavigation?.HoTen</strong><br/>
+                            <small class="text-muted">@comment.MaKH</small>
+                        </td>
+                        <td>
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= comment.Rating)
+                                {
+                                    <i class="fa fa-star text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-star text-muted"></i>
+                                }
+                            }
+                            <br/>
+                            <small>@comment.Rating/5</small>
+                        </td>
+                        <td style="max-width: 300px;">
+                            <div class="text-start">
+                                @if (comment.Content.Length > 100)
+                                {
+                                    @comment.Content.Substring(0, 100)<text>...</text>
+                                }
+                                else
+                                {
+                                    @comment.Content
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(comment.ImagePath))
+                            {
+                                <img src="@comment.ImagePath" 
+                                     alt="Review Image" 
+                                     class="img-thumbnail" 
+                                     style="max-width: 80px; max-height: 80px; object-fit: cover;"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#imageModal-@comment.CommentId"
+                                     role="button" />
+                                
+                                <!-- Modal để xem ảnh lớn -->
+                                <div class="modal fade" id="imageModal-@comment.CommentId" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Hình ảnh đánh giá</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body text-center">
+                                                <img src="@comment.ImagePath" class="img-fluid" alt="Review Image" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Không có</span>
+                            }
+                        </td>
+                        <td>
+                            <small>@comment.CreatedDate.ToString("dd/MM/yyyy HH:mm")</small>
+                        </td>
+                        <td>
+                            @if (comment.IsHidden)
+                            {
+                                <span class="badge bg-warning text-dark">👁️‍🗨️ Đã ẩn</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">👁️ Hiển thị</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group-vertical" role="group">
+                                <!-- Nút Ẩn/Hiện -->
+                                <form asp-action="AnHienBinhLuan" method="post" class="mb-1">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@comment.CommentId" />
+                                    @if (comment.IsHidden)
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-success w-100">
+                                            <i class="fa fa-eye"></i> Hiện
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-warning w-100">
+                                            <i class="fa fa-eye-slash"></i> Ẩn
+                                        </button>
+                                    }
+                                </form>
+                                
+                                <!-- Nút Xóa -->
+                                <form asp-action="XoaBinhLuan" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@comment.CommentId" />
+                                    <button type="submit" class="btn btn-sm btn-danger w-100"
+                                            onclick="return confirm('Bạn có chắc muốn xóa bình luận này?\n\nThông tin:\n- Sản phẩm: @comment.MaHHNavigation?.TenHh\n- Khách hàng: @comment.MaKHNavigation?.HoTen\n- Đánh giá: @comment.Rating sao')">
+                                        <i class="fa fa-trash"></i> Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="fa fa-inbox fa-3x mb-3"></i>
+                        <p>Chưa có bình luận nào trong hệ thống</p>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+    
+    .table-secondary {
+        opacity: 0.7;
+    }
+</style>

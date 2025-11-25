@@ -1,0 +1,84 @@
+﻿@model IEnumerable<HShop.Data.HoaDon>
+
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center fw-bold text-primary mb-4">Quản lý đơn hàng</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger text-center">@TempData["Error"]</div>
+    }
+
+    <table class="table table-bordered table-hover align-middle text-center">
+        <thead class="table-warning">
+            <tr>
+                <th>Mã HĐ</th>
+                <th>Khách hàng</th>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model == null || !Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted">Không có đơn hàng nào</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var hd in Model)
+                {
+                    <tr>
+                        <!-- Mã đơn -->
+                        <td class="fw-semibold">@hd.MaHd</td>
+
+                        <!-- Tên khách hàng -->
+                        <td>@(hd.MaKhNavigation?.HoTen ?? "Không xác định")</td>
+
+                        <!-- Ngày đặt -->
+                        <td>@hd.NgayDat.ToString("dd/MM/yyyy")</td>
+
+                        <!-- Tổng tiền -->
+                        <td>
+                            @{
+                                // ✅ Kiểm tra null an toàn
+                                var tongTien = hd.ChiTietHds?.Sum(ct => (decimal)(ct.SoLuong * ct.DonGia)) ?? 0;
+                            }
+                            @tongTien.ToString("N0") đ
+                        </td>
+
+                        <!-- Trạng thái -->
+                        <td>
+                            @hd.MaTrangThaiNavigation?.TenTrangThai
+                        </td>
+
+                        <!-- Hành động -->
+                        <td>
+                            <form asp-action="CapNhatTrangThai" method="post" class="d-flex justify-content-center align-items-center">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="maHd" value="@hd.MaHd" />
+                                <select name="maTrangThai" class="form-select form-select-sm w-auto me-2">
+                                    <option value="1" selected="@(hd.MaTrangThai == 1)">Đang xử lý</option>
+                                    <option value="2" selected="@(hd.MaTrangThai == 2)">Đang giao</option>
+                                    <option value="3" selected="@(hd.MaTrangThai == 3)">Hoàn tất</option>
+                                    <option value="4" selected="@(hd.MaTrangThai == 4)">Đã hủy</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary btn-sm">Cập nhật</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
