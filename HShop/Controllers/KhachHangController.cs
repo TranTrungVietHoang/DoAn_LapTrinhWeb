@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace HShop.Controllers
 {
@@ -22,7 +22,7 @@ namespace HShop.Controllers
             _mapper = mapper;
         }
 
-        #region Register
+        #region Đăng ký
         [HttpGet]
         public IActionResult DangKy()
         {
@@ -30,7 +30,7 @@ namespace HShop.Controllers
         }
 
         [HttpPost]
-        public IActionResult DangKy(RegisterVM model, IFormFile Hinh)
+        public IActionResult DangKy(RegisterVM model, IFormFile? Hinh)
         {
             if (ModelState.IsValid)
             {
@@ -40,28 +40,28 @@ namespace HShop.Controllers
                     khachHang.RandomKey = MyUtil.GenerateRamdomKey();
                     khachHang.MatKhau = model.MatKhau.ToMd5Hash(khachHang.RandomKey);
                     khachHang.HieuLuc = true;
-                    khachHang.VaiTro = 0;
+                    khachHang.VaiTro = 0; // 0 = khách hàng thường
 
                     if (Hinh != null)
                     {
                         khachHang.Hinh = MyUtil.UploadHinh(Hinh, "KhachHang");
                     }
 
-                    db.Add(khachHang);
+                    db.KhachHangs.Add(khachHang);
                     db.SaveChanges();
-                    return RedirectToAction("Index", "HangHoa");
+                    TempData["Success"] = "Đăng ký thành công! Hãy đăng nhập để tiếp tục.";
+                    return RedirectToAction("DangNhap");
                 }
                 catch (Exception ex)
                 {
-                    var mess = $"{ex.Message}";
+                    ModelState.AddModelError("", $"Lỗi khi đăng ký: {ex.Message}");
                 }
             }
-            return View();
+            return View(model);
         }
         #endregion
 
-
-        #region Login
+        #region Đăng nhập
         [HttpGet]
         public IActionResult DangNhap(string? ReturnUrl)
         {
@@ -73,83 +73,89 @@ namespace HShop.Controllers
         public async Task<IActionResult> DangNhap(LoginVM model, string? ReturnUrl)
         {
             ViewBag.ReturnUrl = ReturnUrl;
-            if (ModelState.IsValid)
+
+            if (!ModelState.IsValid)
             {
-                var khachHang = db.KhachHangs.SingleOrDefault(kh => kh.MaKh == model.UserName);
-                if (khachHang == null)
-                {
-                    ModelState.AddModelError("loi", "Không có khách hàng này");
-                }
-                else if (!khachHang.HieuLuc)
-                {
-                    ModelState.AddModelError("loi", "Tài khoản đã bị khóa. Vui lòng liên hệ Admin.");
-                }
-                else if (khachHang.MatKhau != model.Password.ToMd5Hash(khachHang.RandomKey))
-                {
-                    ModelState.AddModelError("loi", "Sai thông tin đăng nhập");
-                }
-                else
-                {
-                    // Lưu thông tin đăng nhập
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.NameIdentifier, khachHang.MaKh),
-                        new Claim(ClaimTypes.Name, khachHang.HoTen ?? khachHang.MaKh),
-                        new Claim(ClaimTypes.Email, khachHang.Email ?? ""),
-                        new Claim(MySetting.CLAIM_CUSTOMERID, khachHang.MaKh),
-                        new Claim(ClaimTypes.Role, "Customer")
-                    };
-
-                    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
-
-                    if (Url.IsLocalUrl(ReturnUrl))
-                        return Redirect(ReturnUrl);
-                    else
-                        return Redirect("/");
-                }
+                ModelState.AddModelError("loi", "Vui lòng nhập đầy đủ thông tin.");
+                return View(model);
             }
-            return View();
+
+            var khachHang = db.KhachHangs.SingleOrDefault(kh => kh.MaKh == model.UserName);
+            if (khachHang == null)
+            {
+                ModelState.AddModelError("loi", "Không tồn tại tài khoản này.");
+                return View(model);
+            }
+
+            if (!khachHang.HieuLuc)
+            {
+                ModelState.AddModelError("loi", "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+                return View(model);
+            }
+
+            // Kiểm tra mật khẩu
+            var hashedPassword = model.Password.ToMd5Hash(khachHang.RandomKey);
+            if (khachHang.MatKhau != hashedPassword)
+            {
+                ModelState.AddModelError("loi", "Sai mật khẩu.");
+                return View(model);
+            }
+
+            // Xác định vai trò
+            string role = (khachHang.VaiTro == 1) ? "Admin" : "Customer";
+
+            // Tạo danh sách claim
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, khachHang.MaKh),
+                new Claim(ClaimTypes.Name, khachHang.HoTen ?? khachHang.MaKh),
+                new Claim(ClaimTypes.Email, khachHang.Email ?? ""),
+                new Claim(MySetting.CLAIM_CUSTOMERID, khachHang.MaKh),
+                new Claim(ClaimTypes.Role, role)
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+
+            // Điều hướng theo vai trò
+            if (role == "Admin")
+                return RedirectToAction("Index", "Admin"); // Trang quản trị
+
+            if (!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                return Redirect(ReturnUrl);
+
+            return RedirectToAction("Index", "Home"); // Trang chủ khách hàng
         }
         #endregion
 
-
-        #region Profile
+        #region Hồ sơ khách hàng
         [Authorize]
         public IActionResult Profile()
         {
-            // Lấy mã khách hàng từ Claims sau khi đăng nhập
             var maKh = User.Claims.FirstOrDefault(c => c.Type == MySetting.CLAIM_CUSTOMERID)?.Value;
             if (string.IsNullOrEmpty(maKh))
-            {
                 return RedirectToAction("DangNhap");
-            }
 
-            // Lấy thông tin khách hàng từ DB
             var khachHang = db.KhachHangs.FirstOrDefault(kh => kh.MaKh == maKh);
             if (khachHang == null)
-            {
                 return RedirectToAction("DangNhap");
-            }
 
             return View(khachHang);
         }
         #endregion
 
-
-        #region Logout
+        #region Đăng xuất
         [Authorize]
         public async Task<IActionResult> DangXuat()
         {
-            await HttpContext.SignOutAsync();
-            return Redirect("/");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("DangNhap");
         }
         #endregion
 
-
         #region Lịch sử mua hàng
-        [Authorize]
+        [Authorize(Roles = "Customer,Admin")]
         public IActionResult LichSuMuaHang()
         {
             var maKh = User.Claims.FirstOrDefault(c => c.Type == MySetting.CLAIM_CUSTOMERID)?.Value;

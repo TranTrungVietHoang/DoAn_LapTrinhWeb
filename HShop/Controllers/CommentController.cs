@@ -28,7 +28,21 @@ namespace HShop.Controllers
                 return RedirectToAction("Detail", "HangHoa", new { id = model.MaHH });
             }
 
-            string MaKH = User.Identity.Name; // dự án của bạn dùng MaKH làm username
+            // ✅ Lấy MaKH từ database thay vì User.Identity.Name trực tiếp
+            string userIdentity = User.Identity.Name;
+            var khachHang = await _context.KhachHangs
+                .FirstOrDefaultAsync(k => 
+                    k.MaKh == userIdentity || 
+                    k.Email == userIdentity || 
+                    k.HoTen == userIdentity);
+
+            if (khachHang == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy thông tin khách hàng.";
+                return RedirectToAction("Detail", "HangHoa", new { id = model.MaHH });
+            }
+
+            string MaKH = khachHang.MaKh;  // ✅ Lấy MaKH chính xác từ DB
 
             // 1. Kiểm tra khách đã mua hàng chưa
             int soLanMua = await _context.ChiTietHds

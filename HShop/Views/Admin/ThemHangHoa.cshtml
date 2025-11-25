@@ -1,0 +1,110 @@
+﻿@model HShop.Data.HangHoa
+
+@{
+    ViewData["Title"] = "Thêm hàng hóa";
+
+    // ✅ KHỞI TẠO an toàn tuyệt đối để tránh NullReferenceException (thêm try-catch)
+    string success = "";
+    string error = "";
+    try
+    {
+        success = TempData?["Success"]?.ToString() ?? "";
+        error = TempData?["Error"]?.ToString() ?? "";
+    }
+    catch
+    {
+        success = "";
+        error = "";
+    }
+
+    // ✅ Phòng khi ViewBag chưa được truyền từ Controller
+    var loaiList = ViewBag.LoaiList as IEnumerable<HShop.Data.Loai> ?? new List<HShop.Data.Loai>();
+    var nccList = ViewBag.NccList as IEnumerable<HShop.Data.NhaCungCap> ?? new List<HShop.Data.NhaCungCap>();
+}
+
+<div class="container mt-5 mb-5">
+    <h3 class="fw-bold text-center mb-4 text-primary">Thêm hàng hóa mới</h3>
+
+    <!-- ✅ Hiển thị thông báo nếu có -->
+    @if (!string.IsNullOrWhiteSpace(success))
+    {
+        <div class="alert alert-success text-center shadow-sm">@success</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert alert-danger text-center shadow-sm">@error</div>
+    }
+
+    <!-- ✅ enctype để upload hình -->
+    <form asp-action="Create"
+          asp-controller="Admin"
+          method="post"
+          enctype="multipart/form-data"
+          class="shadow p-4 rounded bg-light border">
+        <!-- 🔥 THÊM DẤU '>' Ở CUỐI FORM — đây là nguyên nhân lỗi RZ1035 -->
+        <!-- Tên hàng hóa -->
+        <div class="mb-3">
+            <label asp-for="TenHh" class="form-label fw-bold">Tên hàng hóa</label>
+            <input asp-for="TenHh" class="form-control" placeholder="Nhập tên sản phẩm..." />
+            <span asp-validation-for="TenHh" class="text-danger"></span>
+        </div>
+
+        <!-- Đơn giá -->
+        <div class="mb-3">
+            <label asp-for="DonGia" class="form-label fw-bold">Đơn giá (VNĐ)</label>
+            <input asp-for="DonGia" type="number" class="form-control" placeholder="Nhập đơn giá..." />
+            <span asp-validation-for="DonGia" class="text-danger"></span>
+        </div>
+
+        <!-- Mô tả -->
+        <div class="mb-3">
+            <label asp-for="MoTa" class="form-label fw-bold">Mô tả</label>
+            <textarea asp-for="MoTa" class="form-control" rows="3" placeholder="Nhập mô tả sản phẩm..."></textarea>
+            <span asp-validation-for="MoTa" class="text-danger"></span>
+        </div>
+
+        <!-- Loại hàng -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Loại hàng</label>
+            <select asp-for="MaLoai"
+                    asp-items="@(new SelectList(loaiList, "MaLoai", "TenLoai"))"
+                    class="form-select">
+                <option value="">-- Chọn loại hàng --</option>
+            </select>
+            <span asp-validation-for="MaLoai" class="text-danger"></span>
+        </div>
+
+        <!-- Nhà cung cấp -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Nhà cung cấp</label>
+            <select asp-for="MaNcc"
+                    asp-items="@(new SelectList(nccList, "MaNcc", "TenCongTy"))"
+                    class="form-select">
+                <option value="">-- Chọn nhà cung cấp --</option>
+            </select>
+            <span asp-validation-for="MaNcc" class="text-danger"></span>
+        </div>
+
+        <!-- Hình ảnh -->
+        <div class="mb-3">
+            <label class="form-label fw-bold">Hình ảnh</label>
+            <input type="file" name="Hinh" class="form-control" accept=".jpg,.jpeg,.png" />
+            <small class="text-muted">Chỉ chấp nhận file ảnh (.jpg, .jpeg, .png)</small>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-plus-circle"></i> Thêm sản phẩm
+            </button>
+            <a asp-action="QuanLyHangHoa"
+               asp-controller="Admin"
+               class="btn btn-secondary px-4 ms-2">
+                Quay lại
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
