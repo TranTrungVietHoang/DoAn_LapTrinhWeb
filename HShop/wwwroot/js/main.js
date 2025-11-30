@@ -131,21 +131,31 @@
 
 
 
-    // Product Quantity
-    $('.quantity button').on('click', function () {
-        var button = $(this);
-        var oldValue = button.parent().parent().find('input').val();
-        if (button.hasClass('btn-plus')) {
-            var newVal = parseFloat(oldValue) + 1;
-        } else {
-            if (oldValue > 0) {
-                var newVal = parseFloat(oldValue) - 1;
+    // Disable default quantity handler on Cart page
+    if (window.location.pathname.toLowerCase().indexOf("/cart") === -1) {
+
+        // Product Quantity (for pages other than Cart)
+        $('.quantity button').on('click', function () {
+            var button = $(this);
+            var oldValue = button.parent().parent().find('input').val();
+
+            if (button.hasClass('btn-plus')) {
+                var newVal = parseFloat(oldValue) + 1;
             } else {
-                newVal = 0;
+                if (oldValue > 0) {
+                    var newVal = parseFloat(oldValue) - 1;
+                } else {
+                    newVal = 0;
+                }
             }
-        }
-        button.parent().parent().find('input').val(newVal);
-    });
+
+            button.parent().parent().find('input').val(newVal);
+        });
+
+    }
+
+
+
 
 })(jQuery);
 

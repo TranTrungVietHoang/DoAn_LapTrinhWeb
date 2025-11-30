@@ -17,9 +17,11 @@ public partial class ChiTietHd
     public int SoLuong { get; set; }
 
     public double GiamGia { get; set; }
+	public string? CouponCode { get; set; }
+	public decimal? DiscountValue { get; set; }
 
 
-    public virtual HoaDon MaHdNavigation { get; set; } = null!;
+	public virtual HoaDon MaHdNavigation { get; set; } = null!;
 
     public virtual HangHoa MaHhNavigation { get; set; } = null!;
 }

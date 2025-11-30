@@ -54,6 +54,8 @@ namespace HShop.Data
         public virtual DbSet<YeuThich> YeuThiches { get; set; }
 
         public virtual DbSet<Comment> Comments { get; set; }
+        public virtual DbSet<Coupon> Coupons { get; set; }
+        public virtual DbSet<CouponHistory> CouponHistories { get; set; }
 
         //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -106,6 +108,12 @@ namespace HShop.Data
                     .HasForeignKey(d => d.MaHh)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OrderDetails_Products");
+                entity.Ignore("Coupon");
+                entity.Ignore("CouponId");
+                entity.Ignore("CouponId1");
+                entity.Ignore("CouponId2");
+                entity.Ignore("CouponId3");
+                entity.Ignore("CouponId4");
             });
 
             modelBuilder.Entity<ChuDe>(entity =>
@@ -463,7 +471,22 @@ namespace HShop.Data
                     .WithMany(p => p.Comments)
                     .HasForeignKey(e => e.MaKH);
             });
+            modelBuilder.Entity<CouponHistory>(entity =>
+            {
+                entity.ToTable("CouponHistories");
 
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.CustomerId)
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.CouponCode)
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.UsedDate);
+
+                entity.Property(e => e.OrderId);
+            });
             OnModelCreatingPartial(modelBuilder);
         }
 

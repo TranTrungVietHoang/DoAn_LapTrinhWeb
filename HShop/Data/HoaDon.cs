@@ -33,8 +33,9 @@ public partial class HoaDon
     public string? MaNv { get; set; }
 
     public string? GhiChu { get; set; }
+	public decimal? GiamGia { get; set; }
 
-    public virtual ICollection<ChiTietHd> ChiTietHds { get; set; } = new List<ChiTietHd>();
+	public virtual ICollection<ChiTietHd> ChiTietHds { get; set; } = new List<ChiTietHd>();
 
     public virtual KhachHang MaKhNavigation { get; set; } = null!;
 
