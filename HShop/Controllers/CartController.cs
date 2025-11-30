@@ -22,286 +22,554 @@ namespace ECommerceMVC.Controllers
 
         public List<CartItem> Cart => HttpContext.Session.Get<List<CartItem>>(MySetting.CART_KEY) ?? new List<CartItem>();
 
+
+        // =============================================
+        // CART INDEX
+        // =============================================
         public IActionResult Index()
         {
-            return View(Cart);
+            var cart = Cart;
+
+            var discount = HttpContext.Session.Get<double?>("CouponDiscount") ?? 0;
+            var finalTotal = HttpContext.Session.Get<double?>("FinalTotal")
+                             ?? cart.Sum(p => p.ThanhTien);
+
+            ViewBag.Coupons = db.Coupons
+                .Where(c => c.IsActive && (c.ExpiryDate == null || c.ExpiryDate > DateTime.Now))
+                .OrderBy(c => c.Priority)
+                .ToList();
+
+            ViewBag.Discount = discount;
+            ViewBag.FinalTotal = finalTotal;
+
+            return View(cart);
         }
 
+
+        // =============================================
+        // APPLY COUPON
+        // =============================================
+        [HttpPost]
+        public IActionResult ApplyCoupon(int couponId)
+        {
+            var coupon = db.Coupons.Find(couponId);
+            if (coupon == null || !coupon.IsActive)
+                return Json(new { success = false, message = "Mã giảm giá không hợp lệ" });
+
+            if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate < DateTime.Now)
+                return Json(new { success = false, message = "Mã giảm giá đã hết hạn" });
+
+            var cart = Cart;
+            double totalAmount = cart.Sum(p => p.ThanhTien);
+            int totalQty = cart.Sum(p => p.SoLuong);
+            string? customerId = HttpContext.User.Claims.SingleOrDefault(p => p.Type == MySetting.CLAIM_CUSTOMERID)?.Value;
+
+            // Validate conditions
+            if (coupon.MinQuantity.HasValue && totalQty < coupon.MinQuantity.Value)
+                return Json(new { success = false, message = $"Bạn phải mua ít nhất {coupon.MinQuantity.Value} sản phẩm" });
+
+            if (coupon.MinOrderAmount.HasValue && totalAmount < (double)coupon.MinOrderAmount.Value)
+                return Json(new { success = false, message = $"Đơn hàng phải từ ${coupon.MinOrderAmount.Value}" });
+
+            if (coupon.OnlyForFirstOrder == true)
+            {
+                if (customerId == null)
+                    return Json(new { success = false, message = "Bạn cần đăng nhập" });
+
+                if (db.HoaDons.Any(h => h.MaKh == customerId))
+                    return Json(new { success = false, message = "Mã này chỉ dành cho đơn đầu tiên" });
+            }
+
+            if (coupon.Code == "WELCOME10")
+            {
+                if (customerId == null)
+                    return Json(new { success = false, message = "Bạn cần đăng nhập" });
+
+                if (db.HoaDons.Any(h => h.MaKh == customerId))
+                    return Json(new { success = false, message = "Mã này chỉ dành cho khách hàng mới" });
+
+                if (db.CouponHistories.Any(c => c.CustomerId == customerId && c.CouponCode == coupon.Code))
+                    return Json(new { success = false, message = "Bạn đã dùng mã này rồi" });
+            }
+
+            if (coupon.PerUserLimit.HasValue && customerId != null)
+            {
+                var used = db.CouponHistories.Count(c => c.CustomerId == customerId && c.CouponCode == coupon.Code);
+                if (used >= coupon.PerUserLimit.Value)
+                    return Json(new { success = false, message = "Bạn đã dùng hết số lượt" });
+            }
+
+            if (coupon.UsageLimit.HasValue)
+            {
+                var used = db.CouponHistories.Count(c => c.CouponCode == coupon.Code);
+                if (used >= coupon.UsageLimit.Value)
+                    return Json(new { success = false, message = "Mã đã hết lượt sử dụng" });
+            }
+
+            // Tính giảm giá
+            double discount = 0;
+            if (coupon.DiscountPercent > 0)
+            {
+                discount = totalAmount * ((double)coupon.DiscountPercent / 100);
+
+                if (coupon.MaxDiscount.HasValue && discount > (double)coupon.MaxDiscount.Value)
+                    discount = (double)coupon.MaxDiscount.Value;
+            }
+            else if (coupon.DiscountAmount.HasValue)
+            {
+                discount = (double)coupon.DiscountAmount.Value;
+            }
+
+            HttpContext.Session.Set("Coupon", coupon);
+            HttpContext.Session.Set("CouponDiscount", discount);
+            HttpContext.Session.Set("FinalTotal", totalAmount - discount);
+
+            return Json(new { success = true, discount = discount, newTotal = totalAmount - discount });
+        }
+
+
+        // =============================================
+        // ADD TO CART
+        // =============================================
         public IActionResult AddToCart(int id, int quantity = 1)
         {
-            var gioHang = Cart;
-            var item = gioHang.SingleOrDefault(p => p.MaHh == id);
+            var cart = Cart;
+            var item = cart.SingleOrDefault(p => p.MaHh == id);
+
             if (item == null)
             {
-                var hangHoa = db.HangHoas.SingleOrDefault(p => p.MaHh == id);
-                if (hangHoa == null)
-                {
-                    TempData["Message"] = $"Không tìm thấy hàng hóa có mã {id}";
+                var product = db.HangHoas.SingleOrDefault(p => p.MaHh == id);
+                if (product == null)
                     return Redirect("/404");
-                }
-                item = new CartItem
+
+                cart.Add(new CartItem
                 {
-                    MaHh = hangHoa.MaHh,
-                    TenHH = hangHoa.TenHh,
-                    DonGia = hangHoa.DonGia ?? 0,
-                    Hinh = hangHoa.Hinh ?? string.Empty,
+                    MaHh = product.MaHh,
+                    TenHH = product.TenHh,
+                    DonGia = product.DonGia ?? 0,
+                    Hinh = product.Hinh ?? "",
                     SoLuong = quantity
-                };
-                gioHang.Add(item);
+                });
             }
             else
             {
                 item.SoLuong += quantity;
             }
 
-            HttpContext.Session.Set(MySetting.CART_KEY, gioHang);
-
+            HttpContext.Session.Set(MySetting.CART_KEY, cart);
             return RedirectToAction("Index");
         }
 
+
+        // =============================================
+        // REMOVE ITEM
+        // =============================================
         public IActionResult RemoveCart(int id)
         {
-            var gioHang = Cart;
-            var item = gioHang.SingleOrDefault(p => p.MaHh == id);
+            var cart = Cart;
+            var item = cart.SingleOrDefault(p => p.MaHh == id);
+
             if (item != null)
             {
-                gioHang.Remove(item);
-                HttpContext.Session.Set(MySetting.CART_KEY, gioHang);
+                cart.Remove(item);
+                HttpContext.Session.Set(MySetting.CART_KEY, cart);
             }
+
+            if (!cart.Any())
+            {
+                HttpContext.Session.Remove("Coupon");
+                HttpContext.Session.Remove("CouponDiscount");
+                HttpContext.Session.Remove("FinalTotal");
+            }
+
             return RedirectToAction("Index");
         }
 
+
+
+        [Authorize]
+        [HttpPost]
+        public IActionResult UpdateQuantity(int id, int quantity)
+        {
+            var cart = Cart;
+            var item = cart.SingleOrDefault(p => p.MaHh == id);
+
+            if (item != null)
+            {
+                item.SoLuong = quantity;
+                HttpContext.Session.Set(MySetting.CART_KEY, cart);
+            }
+
+            double subtotal = cart.Sum(p => p.ThanhTien);
+            var coupon = HttpContext.Session.Get<Coupon>("Coupon");
+
+            double discount = 0;
+            bool valid = true;
+
+            if (coupon != null)
+            {
+                if (coupon.MinOrderAmount.HasValue && subtotal < (double)coupon.MinOrderAmount.Value)
+                    valid = false;
+
+                if (coupon.MinQuantity.HasValue && cart.Sum(x => x.SoLuong) < coupon.MinQuantity.Value)
+                    valid = false;
+
+                if (valid)
+                {
+                    if (coupon.DiscountPercent > 0)
+                    {
+                        discount = subtotal * ((double)coupon.DiscountPercent / 100);
+                        if (coupon.MaxDiscount.HasValue && discount > (double)coupon.MaxDiscount.Value)
+                            discount = (double)coupon.MaxDiscount.Value;
+                    }
+                    else if (coupon.DiscountAmount.HasValue)
+                    {
+                        discount = (double)coupon.DiscountAmount.Value;
+                    }
+
+                    HttpContext.Session.Set("CouponDiscount", discount);
+                }
+                else
+                {
+                    HttpContext.Session.Remove("Coupon");
+                    HttpContext.Session.Remove("CouponDiscount");
+                }
+            }
+
+            double finalTotal = subtotal - discount;
+
+            return Json(new
+            {
+                subtotal,
+                discount,
+                finalTotal,
+                couponRemoved = !valid
+            });
+        }
+
+
+       
         [Authorize]
         [HttpGet]
         public IActionResult Checkout()
         {
-            if (Cart.Count == 0)
-            {
-                return Redirect("/");
-            }
+            var cart = Cart;
 
+            double discount = HttpContext.Session.Get<double>("CouponDiscount");
+            double subtotal = cart.Sum(p => p.ThanhTien);
+            double final = subtotal - discount;
+
+            if (final < 0) final = 0;
+
+            ViewBag.Discount = discount;
+            ViewBag.FinalTotal = final;
             ViewBag.PaypalClientdId = _paypalClient.ClientId;
-            return View(Cart);
+
+            return View(cart);
         }
 
-        [Authorize]
+
+        // =============================================
+        // CHECKOUT SUBMIT (COD + VNPAY)
+        // =============================================
         [HttpPost]
         public IActionResult Checkout(CheckoutVM model, string payment = "COD")
         {
-            if (ModelState.IsValid)
+            if (model.GiongKhachHang)
             {
-                if (payment == "Thanh toán VNPay")
-                {
-                    var vnPayModel = new VnPaymentRequestModel
-                    {
-                        Amount = Cart.Sum(p => p.ThanhTien),
-                        CreatedDate = DateTime.Now,
-                        Description = $"{model.HoTen} {model.DienThoai}",
-                        FullName = model.HoTen,
-                        OrderId = new Random().Next(1000, 100000)
-                    };
-                    return Redirect(_vnPayservice.CreatePaymentUrl(HttpContext, vnPayModel));
-                }
-
-                var customerId = HttpContext.User.Claims.SingleOrDefault(p => p.Type == MySetting.CLAIM_CUSTOMERID).Value;
-                var khachHang = new KhachHang();
-                if (model.GiongKhachHang)
-                {
-                    khachHang = db.KhachHangs.SingleOrDefault(kh => kh.MaKh == customerId);
-                }
-
-                var hoadon = new HoaDon
-                {
-                    MaKh = customerId,
-                    HoTen = model.HoTen ?? khachHang.HoTen,
-                    DiaChi = model.DiaChi ?? khachHang.DiaChi,
-                    DienThoai = model.DienThoai ?? khachHang.DienThoai,
-                    NgayDat = DateTime.Now,
-                    CachThanhToan = "COD",
-                    CachVanChuyen = "GRAB",
-                    MaTrangThai = 0,
-                    GhiChu = model.GhiChu
-                };
-
-                db.Database.BeginTransaction();
-                try
-                {
-
-                    db.Add(hoadon);
-                    db.SaveChanges();
-
-                    var cthds = new List<ChiTietHd>();
-                    foreach (var item in Cart)
-                    {
-                        cthds.Add(new ChiTietHd
-                        {
-                            MaHd = hoadon.MaHd,
-                            SoLuong = item.SoLuong,
-                            DonGia = item.DonGia,
-                            MaHh = item.MaHh,
-                            GiamGia = 0
-                        });
-                    }
-                    db.AddRange(cthds);
-                    db.SaveChanges();
-                    db.Database.CommitTransaction();
-
-                    HttpContext.Session.Set<List<CartItem>>(MySetting.CART_KEY, new List<CartItem>());
-
-                    return View("Success");
-                }
-                catch
-                {
-                    db.Database.RollbackTransaction();
-                }
+                ModelState.Remove("HoTen");
+                ModelState.Remove("DiaChi");
+                ModelState.Remove("DienThoai");
+            }
+            else
+            {
+                // Validate manually when NOT using customer info
+                if (string.IsNullOrWhiteSpace(model.HoTen))
+                    ModelState.AddModelError("HoTen", "Vui lòng nhập tên người nhận");
+                
+                if (string.IsNullOrWhiteSpace(model.DiaChi))
+                    ModelState.AddModelError("DiaChi", "Vui lòng nhập địa chỉ nhận hàng");
+                
+                if (string.IsNullOrWhiteSpace(model.DienThoai))
+                    ModelState.AddModelError("DienThoai", "Vui lòng nhập số điện thoại");
             }
 
-            return View(Cart);
+        
+            if (!ModelState.IsValid)
+            {
+                var cart = Cart;
+
+                double discount = HttpContext.Session.Get<double>("CouponDiscount");
+                double subtotal = cart.Sum(p => p.ThanhTien);
+                double final = subtotal - discount;
+
+                if (final < 0) final = 0;
+
+                ViewBag.Discount = discount;
+                ViewBag.FinalTotal = final;
+                ViewBag.PaypalClientdId = _paypalClient.ClientId;
+
+                return View(cart);
+            }
+
+            var coupon = HttpContext.Session.Get<Coupon>("Coupon");
+            double couponDiscount = HttpContext.Session.Get<double>("CouponDiscount");
+            double subtotal2 = Cart.Sum(p => p.ThanhTien);
+            double finalTotal = subtotal2 - couponDiscount;
+            if (finalTotal < 0) finalTotal = 0;
+
+            // ===================== VNPAY =======================
+            if (payment == "Thanh toán VNPay")
+            {
+                var vnPayModel = new VnPaymentRequestModel
+                {
+                    Amount = finalTotal,
+                    CreatedDate = DateTime.Now,
+                    Description = $"{model.HoTen} {model.DienThoai}",
+                    FullName = model.HoTen,
+                    OrderId = new Random().Next(1000, 100000)
+                };
+                return Redirect(_vnPayservice.CreatePaymentUrl(HttpContext, vnPayModel));
+            }
+
+
+            // ===================== LẤY KHÁCH HÀNG =======================
+            var customerId = HttpContext.User.Claims
+                .SingleOrDefault(x => x.Type == MySetting.CLAIM_CUSTOMERID)?.Value;
+
+            var khachHang = model.GiongKhachHang
+                ? db.KhachHangs.Single(kh => kh.MaKh == customerId)
+                : new KhachHang();
+
+
+            // ===================== TẠO HOÁ ĐƠN =======================
+            var hoadon = new HoaDon
+            {
+                MaKh = customerId,
+                HoTen = model.HoTen ?? khachHang.HoTen,
+                DiaChi = model.DiaChi ?? khachHang.DiaChi,
+                DienThoai = model.DienThoai ?? khachHang.DienThoai,
+                NgayDat = DateTime.Now,
+                CachThanhToan = "COD",
+                CachVanChuyen = "GRAB",
+                MaTrangThai = 0,
+                GhiChu = model.GhiChu,
+                GiamGia = (decimal)couponDiscount
+            };
+
+
+            db.Database.BeginTransaction();
+
+            try
+            {
+                db.Add(hoadon);
+                db.SaveChanges();
+
+                double tongTien = Cart.Sum(x => x.ThanhTien);   // Tổng tiền trước giảm
+                double giamGiaTong = couponDiscount;            // Tổng giảm giá
+
+                var list = new List<ChiTietHd>();
+
+                foreach (var item in Cart)
+                {
+                    double giaTriSP = item.ThanhTien;
+
+                    // Phân bổ giảm giá theo tỷ lệ
+                    double giamGiaSP = Math.Round((giaTriSP / tongTien) * giamGiaTong);
+
+                    if (giamGiaSP > giaTriSP) giamGiaSP = giaTriSP; // tránh âm
+
+                    list.Add(new ChiTietHd
+                    {
+                        MaHd = hoadon.MaHd,
+                        MaHh = item.MaHh,
+                        SoLuong = item.SoLuong,
+                        DonGia = item.DonGia,
+                        CouponCode = coupon?.Code,
+                        DiscountValue = (decimal)giamGiaSP,
+                        GiamGia = giamGiaSP
+                    });
+                }
+
+                db.AddRange(list);
+
+                if (coupon != null)
+                {
+                    db.CouponHistories.Add(new CouponHistory
+                    {
+                        CustomerId = customerId,
+                        CouponCode = coupon.Code,
+                        UsedDate = DateTime.Now,
+                        OrderId = hoadon.MaHd
+                    });
+                }
+
+                db.SaveChanges();
+                db.Database.CommitTransaction();
+
+
+                HttpContext.Session.Remove(MySetting.CART_KEY);
+                HttpContext.Session.Remove("Coupon");
+                HttpContext.Session.Remove("CouponDiscount");
+
+                return View("Success");
+            }
+            catch (Exception ex)
+            {
+                db.Database.RollbackTransaction();
+                
+                // Log error to debug
+                ModelState.AddModelError("", $"Lỗi khi đặt hàng: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    ModelState.AddModelError("", $"Chi tiết: {ex.InnerException.Message}");
+                }
+
+                var cart = Cart;
+                double discount = HttpContext.Session.Get<double>("CouponDiscount");
+                double subtotal = cart.Sum(p => p.ThanhTien);
+                double final = subtotal - discount;
+                if (final < 0) final = 0;
+
+                ViewBag.Discount = discount;
+                ViewBag.FinalTotal = final;
+                ViewBag.PaypalClientdId = _paypalClient.ClientId;
+
+                return View(cart);
+            }
         }
 
+
+
+        // ===================== SUCCESS =======================
         [Authorize]
         public IActionResult PaymentSuccess()
         {
             return View("Success");
         }
 
-        #region Paypal payment
+
+        // ===================== PAYPAL =======================
         [Authorize]
         [HttpPost("/Cart/create-paypal-order")]
-        public async Task<IActionResult> CreatePaypalOrder(CancellationToken cancellationToken)
+        public async Task<IActionResult> CreatePaypalOrder(CancellationToken ct)
         {
-            // Thông tin đơn hàng gửi qua Paypal
-            var tongTien = Cart.Sum(p => p.ThanhTien).ToString();
-            var donViTienTe = "USD";
-            var maDonHangThamChieu = "DH" + DateTime.Now.Ticks.ToString();
+            var amount = Cart.Sum(p => p.ThanhTien).ToString();
 
-            try
-            {
-                var response = await _paypalClient.CreateOrder(tongTien, donViTienTe, maDonHangThamChieu);
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                var error = new { ex.GetBaseException().Message };
-                return BadRequest(error);
-            }
+            var response = await _paypalClient.CreateOrder(amount, "USD", "HD" + DateTime.Now.Ticks);
+            return Ok(response);
         }
 
         [Authorize]
         [HttpPost("/Cart/capture-paypal-order")]
-        public async Task<IActionResult> CapturePaypalOrder(string orderID, CancellationToken cancellationToken)
+        public async Task<IActionResult> CapturePaypalOrder(string orderID)
         {
-            try
-            {
-                var response = await _paypalClient.CaptureOrder(orderID);
+            var response = await _paypalClient.CaptureOrder(orderID);
 
-                string errorMessage;
-                if (SaveOrder("PayPal", "Thanh toán bằng PayPal", out errorMessage))
-                {
-                    return Ok(response);
-                }
-                else
-                {
-                    return BadRequest(new { message = "Lỗi lưu đơn hàng: " + errorMessage });
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.GetBaseException().Message });
-            }
+            string errorMessage;
+            SaveOrder("PayPal", "Thanh toán bằng PayPal", out errorMessage);
 
+            return Ok(response);
         }
 
-        #endregion
 
-        [Authorize]
-        public IActionResult PaymentFail()
-        {
-            return View();
-        }
-
+        // ===================== VNPAY CALLBACK =======================
         [Authorize]
         public IActionResult PaymentCallBack()
         {
             var response = _vnPayservice.PaymentExecute(Request.Query);
 
             if (response == null || response.VnPayResponseCode != "00")
-            {
-                TempData["Message"] = $"Lỗi thanh toán VN Pay: {response.VnPayResponseCode}";
                 return RedirectToAction("PaymentFail");
-            }
-
 
             string errorMessage;
-            if (SaveOrder("VNPay", "Thanh toán qua VNPay", out errorMessage))
-            {
-                TempData["Message"] = $"Thanh toán VNPay thành công";
-                return RedirectToAction("PaymentSuccess");
-            }
-            else
-            {
-                TempData["Message"] = "Lỗi lưu đơn hàng: " + errorMessage;
-                return RedirectToAction("PaymentFail");
-            }
+            SaveOrder("VNPay", "Thanh toán qua VNPay", out errorMessage);
+
+            return RedirectToAction("PaymentSuccess");
         }
 
-        private bool SaveOrder(string paymentMethod, string ghiChu, out string errorMessage)
+
+        // ===================== LƯU HOÁ ĐƠN CHUNG =======================
+        private bool SaveOrder(string method, string note, out string error)
         {
-            errorMessage = string.Empty;
+            error = string.Empty;
 
             try
             {
-                var customerId = HttpContext.User.Claims.SingleOrDefault(p => p.Type == MySetting.CLAIM_CUSTOMERID)?.Value;
-                var khachHang = db.KhachHangs.SingleOrDefault(kh => kh.MaKh == customerId);
+                var customerId = HttpContext.User.Claims
+                    .Single(p => p.Type == MySetting.CLAIM_CUSTOMERID).Value;
 
-                if (khachHang == null)
-                {
-                    errorMessage = "Không tìm thấy thông tin khách hàng.";
-                    return false;
-                }
+                var kh = db.KhachHangs.Single(k => k.MaKh == customerId);
 
-                var hoadon = new HoaDon
+                var coupon = HttpContext.Session.Get<Coupon>("Coupon");
+                double discountValue = HttpContext.Session.Get<double>("CouponDiscount");
+
+                var hd = new HoaDon
                 {
                     MaKh = customerId,
-                    HoTen = khachHang.HoTen,
-                    DiaChi = khachHang.DiaChi,
-                    DienThoai = khachHang.DienThoai,
+                    HoTen = kh.HoTen,
+                    DiaChi = kh.DiaChi,
+                    DienThoai = kh.DienThoai,
                     NgayDat = DateTime.Now,
-                    CachThanhToan = paymentMethod,
+                    CachThanhToan = method,
                     CachVanChuyen = "GRAB",
                     MaTrangThai = 0,
-                    GhiChu = ghiChu
+                    GhiChu = note,
+                    GiamGia = (decimal)discountValue
                 };
 
                 db.Database.BeginTransaction();
-                db.Add(hoadon);
+                db.HoaDons.Add(hd);
                 db.SaveChanges();
 
-                var cthds = Cart.Select(item => new ChiTietHd
-                {
-                    MaHd = hoadon.MaHd,
-                    SoLuong = item.SoLuong,
-                    DonGia = item.DonGia,
-                    MaHh = item.MaHh,
-                    GiamGia = 0
-                }).ToList();
+                double tongTien = Cart.Sum(x => x.ThanhTien);
+                double giamGiaTong = discountValue;
 
-                db.AddRange(cthds);
+                foreach (var item in Cart)
+                {
+                    double giaTriSP = item.ThanhTien;
+
+                    double giamGiaSP = Math.Round((giaTriSP / tongTien) * giamGiaTong);
+                    if (giamGiaSP > giaTriSP) giamGiaSP = giaTriSP;
+
+                    db.ChiTietHds.Add(new ChiTietHd
+                    {
+                        MaHd = hd.MaHd,
+                        MaHh = item.MaHh,
+                        SoLuong = item.SoLuong,
+                        DonGia = item.DonGia,
+                        CouponCode = coupon?.Code,
+                        DiscountValue = (decimal)giamGiaSP,
+                        GiamGia = giamGiaSP
+                    });
+                }
+
+                if (coupon != null)
+                {
+                    db.CouponHistories.Add(new CouponHistory
+                    {
+                        CustomerId = customerId,
+                        CouponCode = coupon.Code,
+                        UsedDate = DateTime.Now,
+                        OrderId = hd.MaHd
+                    });
+                }
+
                 db.SaveChanges();
                 db.Database.CommitTransaction();
 
-                // Xóa giỏ hàng
-                HttpContext.Session.Set(MySetting.CART_KEY, new List<CartItem>());
+                HttpContext.Session.Remove(MySetting.CART_KEY);
+                HttpContext.Session.Remove("Coupon");
+                HttpContext.Session.Remove("CouponDiscount");
+
                 return true;
             }
             catch (Exception ex)
             {
                 db.Database.RollbackTransaction();
-                errorMessage = ex.InnerException?.Message ?? ex.Message;
+                error = ex.Message;
                 return false;
             }
         }
-
     }
 }

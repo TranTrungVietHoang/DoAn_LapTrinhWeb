@@ -1,111 +1,213 @@
 ﻿@model IEnumerable<HShop.ViewModels.CartItem>
 @{
-	ViewData["Title"] = "Giỏ hàng";
+    ViewData["Title"] = "Giỏ hàng";
 }
 
 <!-- Single Page Header start -->
 <div class="container-fluid page-header py-5">
-	<h1 class="text-center text-white display-6">Cart</h1>
-	<ol class="breadcrumb justify-content-center mb-0">
-		<li class="breadcrumb-item"><a href="#">Home</a></li>
-		<li class="breadcrumb-item"><a href="#">Pages</a></li>
-		<li class="breadcrumb-item active text-white">Cart</li>
-	</ol>
+    <h1 class="text-center text-white display-6">Cart</h1>
+    <ol class="breadcrumb justify-content-center mb-0">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Pages</a></li>
+        <li class="breadcrumb-item active text-white">Cart</li>
+    </ol>
 </div>
 <!-- Single Page Header End -->
 <!-- Cart Page Start -->
 <div class="container-fluid py-5">
-	<div class="container py-5">
-		<div class="table-responsive">
-			<table class="table">
-				<thead>
-					<tr>
-						<th scope="col">Products</th>
-						<th scope="col">Name</th>
-						<th scope="col">Price</th>
-						<th scope="col">Quantity</th>
-						<th scope="col">Total</th>
-						<th scope="col">Handle</th>
-					</tr>
-				</thead>
-				<tbody>
-					@foreach (var item in Model)
-					{
-						<tr>
-							<th scope="row">
-								<div class="d-flex align-items-center">
-									<img src="~/Hinh/HangHoa/@item.Hinh" class="img-fluid me-5 rounded-circle" style="width: 80px; height: 80px;" alt="@item.TenHH">
-								</div>
-							</th>
-							<td>
-								<p class="mb-0 mt-4">
-									<a asp-action="Detail" asp-controller="HangHoa" asp-route-id="@item.MaHh">
-										@item.TenHH
-									</a>
-								</p>
-							</td>
-							<td>
-								<p class="mb-0 mt-4">$ @item.DonGia</p>
-							</td>
-							<td>
-								<div class="input-group quantity mt-4" style="width: 100px;">
-									<div class="input-group-btn">
-										<button class="btn btn-sm btn-minus rounded-circle bg-light border">
-											<i class="fa fa-minus"></i>
-										</button>
-									</div>
-									<input type="text" class="form-control form-control-sm text-center border-0" value="@item.SoLuong">
-									<div class="input-group-btn">
-										<button class="btn btn-sm btn-plus rounded-circle bg-light border">
-											<i class="fa fa-plus"></i>
-										</button>
-									</div>
-								</div>
-							</td>
-							<td>
-								<p class="mb-0 mt-4">$ @item.ThanhTien</p>
-							</td>
-							<td>
-								<a asp-action="RemoveCart" asp-controller="Cart" asp-route-id="@item.MaHh" class="btn btn-md rounded-circle bg-light border mt-4">
-									<i class="fa fa-times text-danger"></i>
-								</a>
-							</td>
+    <div class="container py-5">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Products</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Handle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <th scope="row">
+                                <div class="d-flex align-items-center">
+                                    <img src="~/Hinh/HangHoa/@item.Hinh"
+                                         class="img-fluid me-5 rounded-circle"
+                                         style="width: 80px; height: 80px;"
+                                         alt="@item.TenHH">
+                                </div>
+                            </th>
+                            <td>
+                                <p class="mb-0 mt-4">
+                                    <a asp-action="Detail"
+                                       asp-controller="HangHoa"
+                                       asp-route-id="@item.MaHh">@item.TenHH</a>
+                                </p>
+                            </td>
+                            <td>
+                                <p class="mb-0 mt-4">$ @item.DonGia</p>
+                            </td>
+                            <td>
+                                <div class="input-group quantity mt-4" style="width: 100px;">
+                                    <div class="input-group-btn">
+                                        <button class="btn btn-sm btn-minus rounded-circle bg-light border">
+                                            <i class="fa fa-minus" style="pointer-events:none;"></i>
+                                        </button>
+                                    </div>
+                                    <input type="text"
+                                           class="form-control form-control-sm text-center border-0 quantity-input"
+                                           value="@item.SoLuong"
+                                           data-id="@item.MaHh"
+                                           data-price="@item.DonGia" />
+                                    <div class="input-group-btn">
+                                        <button class="btn btn-sm btn-plus rounded-circle bg-light border">
+                                            <i class="fa fa-plus" style="pointer-events:none;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <p class="mb-0 mt-4 item-total" data-product-id="@item.MaHh">$ @item.ThanhTien</p>
+                            </td>
+                            <td>
+                                <a asp-action="RemoveCart"
+                                   asp-controller="Cart"
+                                   asp-route-id="@item.MaHh"
+                                   class="btn btn-md rounded-circle bg-light border mt-4">
+                                    <i class="fa fa-times text-danger"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
-						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
-		<div class="mt-5">
-			<input type="text" class="border-0 border-bottom rounded me-5 py-3 mb-4" placeholder="Coupon Code">
-			<button class="btn border-secondary rounded-pill px-4 py-3 text-primary" type="button">Apply Coupon</button>
-		</div>
-		<div class="row g-4 justify-content-end">
-			<div class="col-8"></div>
-			<div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
-				<div class="bg-light rounded">
-					<div class="p-4">
-						<h1 class="display-6 mb-4">Cart <span class="fw-normal">Total</span></h1>
-						<div class="d-flex justify-content-between mb-4">
-							<h5 class="mb-0 me-4">Subtotal:</h5>
-							<p class="mb-0">$@Model.Sum(p => p.ThanhTien)</p>
-						</div>
-						<div class="d-flex justify-content-between">
-							<h5 class="mb-0 me-4">Shipping</h5>
-							<div class="">
-								<p class="mb-0">Flat rate: $0.00</p>
-							</div>
-						</div>
-						<p class="mb-0 text-end">Shipping to Ukraine.</p>
-					</div>
-					<div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
-						<h5 class="mb-0 ps-4 me-4">Total</h5>
-						<p class="mb-0 pe-4">$@Model.Sum(p => p.ThanhTien)</p>
-					</div>
-					<a class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4" asp-action="Checkout" asp-controller="Cart">Proceed Checkout</a>
-				</div>
-			</div>
-		</div>
-	</div>
+        @if (ViewBag.Coupons != null && ((List<HShop.Data.Coupon>)ViewBag.Coupons).Count > 0)
+        {
+            <div class="mt-5">
+                <select id="coupon-select" class="form-select border-0 border-bottom rounded me-5 py-3 mb-4"
+                        style="width: 350px; display: inline-block;">
+                    <option value="">Chọn mã giảm giá</option>
+                    @foreach (var coupon in (List<HShop.Data.Coupon>)ViewBag.Coupons)
+                    {
+                        <option value="@coupon.Id">
+                            @coupon.Code - @coupon.Description
+                        </option>
+                    }
+                </select>
+
+                <button id="apply-coupon-btn" class="btn border-secondary rounded-pill px-4 py-3 text-primary" type="button">
+                    Apply Coupon
+                </button>
+            </div>
+        }
+
+        <div class="row g-4 justify-content-end">
+            <div class="col-8"></div>
+            <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
+                <div class="bg-light rounded">
+                    <div class="p-4">
+                        <h1 class="display-6 mb-4">Cart <span class="fw-normal">Total</span></h1>
+
+                        <div class="d-flex justify-content-between mb-4">
+                            <h5 class="mb-0 me-4">Subtotal:</h5>
+                            <p class="mb-0" id="cart-subtotal">
+                                $@Model.Sum(p => p.ThanhTien).ToString("N0")
+                            </p>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-4" id="discount-section">
+                            <h5 class="mb-0 me-4 text-success">Discount:</h5>
+                            <p class="mb-0 text-success" id="cart-discount">
+                                - $@(ViewBag.Discount ?? 0)
+                            </p>
+                        </div>
+
+                    </div>
+
+                    @{
+                        var subtotal = Model.Sum(p => p.ThanhTien);
+                        var discount = ViewBag.Discount ?? 0;
+                        var finalTotal = ViewBag.FinalTotal ?? subtotal;
+                    }
+
+                    <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
+                        <h5 class="mb-0 ps-4 me-4">Total</h5>
+                        <p class="mb-0 pe-4" id="cart-total">$@finalTotal.ToString("N0")</p>
+                    </div>
+
+                    <a class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4"
+                       asp-action="Checkout" asp-controller="Cart">Proceed Checkout</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<!-- Cart Page End -->
+
+@section Scripts {
+    <script>
+
+        $(document).on("click", "#apply-coupon-btn", function () {
+            var couponId = $("#coupon-select").val();
+            if (!couponId) {
+                alert("Vui lòng chọn mã giảm giá.");
+                return;
+            }
+
+            $.post("/Cart/ApplyCoupon", { couponId: couponId }, function (res) {
+                if (res.success) {
+                    $("#cart-discount").text("- $" + Math.round(res.discount));
+                    $("#cart-total").text("$" + Math.round(res.newTotal));
+                    alert("Áp dụng mã giảm giá thành công!");
+                } else {
+                    alert(res.message);
+                }
+            });
+        });
+
+
+        
+        $(".btn-plus").click(function () {
+            var input = $(this).closest(".quantity").find(".quantity-input");
+            var qty = parseInt(input.val()) + 1;
+            input.val(qty);
+            updateQuantity(input);
+        });
+
+        $(".btn-minus").click(function () {
+            var input = $(this).closest(".quantity").find(".quantity-input");
+            var qty = parseInt(input.val()) - 1;
+            if (qty < 1) qty = 1;
+            input.val(qty);
+            updateQuantity(input);
+        });
+
+
+        function updateQuantity(input) {
+            var id = input.data("id");
+            var qty = parseInt(input.val());
+
+            $.post("/Cart/UpdateQuantity", { id: id, quantity: qty }, function (res) {
+
+                $("#cart-subtotal").text("$" + Math.round(res.subtotal));
+                $("#cart-discount").text("-$" + Math.round(res.discount));
+                $("#cart-total").text("$" + Math.round(res.finalTotal));
+
+                // cập nhật lại tiền của từng item
+                var price = parseFloat(input.data("price"));
+                var total = qty * price;
+                input.closest("tr").find(".item-total").text("$ " + Math.round(total));
+            });
+        }
+
+
+    </script>
+}
+
+
+
+
