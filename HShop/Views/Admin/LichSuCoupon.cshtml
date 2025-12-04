@@ -1,0 +1,96 @@
+@model IEnumerable<HShop.Data.CouponHistory>
+
+@{
+    ViewData["Title"] = "Lịch Sử Sử Dụng Coupon";
+    var historyData = ViewBag.HistoryWithCustomer as List<dynamic>;
+}
+
+<h1 class="text-primary mb-4">📊 Lịch Sử Sử Dụng Coupon</h1>
+
+<!-- Nút quay lại -->
+<div class="mb-3">
+    <a asp-action="QuanLyCoupon" class="btn btn-secondary">
+        <i class="fa fa-arrow-left"></i> Quay lại Quản lý Coupon
+    </a>
+</div>
+
+<!-- Thống kê -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">Tổng lượt sử dụng</h5>
+                <h2 class="display-4">@Model.Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">Khách hàng duy nhất</h5>
+                <h2 class="display-4">@Model.Select(h => h.CustomerId).Distinct().Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h5 class="card-title text-info">Coupon khác nhau</h5>
+                <h2 class="display-4">@Model.Select(h => h.CouponCode).Distinct().Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">Hôm nay</h5>
+                <h2 class="display-4">@Model.Count(h => h.UsedDate.Date == DateTime.Today)</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Thống kê theo coupon -->
+@if (Model.Any())
+{
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">📈 Thống kê theo Coupon</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Mã Coupon</th>
+                            <th class="text-center">Số lượt sử dụng</th>
+                            <th class="text-center">Số khách hàng</th>
+                            <th class="text-center">Lần đầu</th>
+                            <th class="text-center">Lần cuối</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in Model.GroupBy(h => h.CouponCode))
+                        {
+                            <tr>
+                                <td><strong class="text-primary">@group.Key</strong></td>
+                                <td class="text-center">@group.Count()</td>
+                                <td class="text-center">@group.Select(g => g.CustomerId).Distinct().Count()</td>
+                                <td class="text-center"><small>@group.Min(g => g.UsedDate).ToString("dd/MM/yyyy")</small></td>
+                                <td class="text-center"><small>@group.Max(g => g.UsedDate).ToString("dd/MM/yyyy")</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+</style>

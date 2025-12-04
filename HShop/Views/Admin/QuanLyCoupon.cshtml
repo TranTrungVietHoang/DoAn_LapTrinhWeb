@@ -1,0 +1,272 @@
+@model IEnumerable<HShop.Data.Coupon>
+
+@{
+    ViewData["Title"] = "Quản lý Coupon";
+}
+
+<h1 class="text-primary mb-4">🎫 Quản lý Coupon</h1>
+
+<!-- Thông báo -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Thống kê -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">Tổng Coupons</h5>
+                <h2 class="display-4">@Model.Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">Đang hoạt động</h5>
+                <h2 class="display-4">@Model.Count(c => c.IsActive)</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="card-title text-warning">Đã hết hạn</h5>
+                <h2 class="display-4">@Model.Count(c => c.ExpiryDate.HasValue && c.ExpiryDate < DateTime.Now)</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title text-danger">Vô hiệu hóa</h5>
+                <h2 class="display-4">@Model.Count(c => !c.IsActive)</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nút thêm mới & Thống kê -->
+<div class="mb-3 d-flex gap-2">
+    <a asp-action="TaoCoupon" class="btn btn-success">
+        <i class="fa fa-plus"></i> Tạo Coupon Mới
+    </a>
+    <a asp-action="LichSuCoupon" class="btn btn-info">
+        <i class="fa fa-chart-bar"></i> Thống Kê Coupons
+    </a>
+    <a asp-action="ChiTietSuDungCoupon" class="btn btn-primary">
+        <i class="fa fa-list-alt"></i> Lịch Sử Chi Tiết
+    </a>
+</div>
+
+<!-- Bảng danh sách -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover text-center align-middle shadow-sm">
+        <thead class="table-primary">
+            <tr>
+                <th>ID</th>
+                <th>Mã Coupon</th>
+                <th>Mô tả</th>
+                <th>Giảm giá</th>
+                <th>Điều kiện</th>
+                <th>Hạn sử dụng</th>
+                <th>Giới hạn</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                foreach (var coupon in Model)
+                {
+                    var isExpired = coupon.ExpiryDate.HasValue && coupon.ExpiryDate < DateTime.Now;
+                    var rowClass = !coupon.IsActive ? "table-secondary" : (isExpired ? "table-warning" : "");
+                    
+                    <tr class="@rowClass">
+                        <td>@coupon.Id</td>
+                        <td>
+                            <strong class="text-primary">@coupon.Code</strong><br/>
+                            <small class="text-muted">Priority: @coupon.Priority</small>
+                        </td>
+                        <td style="max-width: 200px;">
+                            <div class="text-start">
+                                @if (!string.IsNullOrEmpty(coupon.Description))
+                                {
+                                    if (coupon.Description.Length > 50)
+                                    {
+                                        @coupon.Description.Substring(0, 50)<text>...</text>
+                                    }
+                                    else
+                                    {
+                                        @coupon.Description
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            @if (coupon.DiscountPercent > 0)
+                            {
+                                <span class="badge bg-success">@coupon.DiscountPercent%</span>
+                                if (coupon.MaxDiscount.HasValue)
+                                {
+                                    <br/><small class="text-muted">Max: @coupon.MaxDiscount.Value.ToString("N0") đ</small>
+                                }
+                            }
+                            else if (coupon.DiscountAmount.HasValue)
+                            {
+                                <span class="badge bg-info">@coupon.DiscountAmount.Value.ToString("N0") đ</span>
+                            }
+                        </td>
+                        <td class="text-start" style="font-size: 0.85rem;">
+                            @if (coupon.MinOrderAmount.HasValue)
+                            {
+                                <div>💰 Đơn tối thiểu: <strong>@coupon.MinOrderAmount.Value.ToString("N0") đ</strong></div>
+                            }
+                            @if (coupon.MinQuantity.HasValue)
+                            {
+                                <div>📦 SL tối thiểu: <strong>@coupon.MinQuantity</strong></div>
+                            }
+                            @if (coupon.OnlyForFirstOrder == true)
+                            {
+                                <div>🔰 <span class="text-warning">Chỉ đơn đầu</span></div>
+                            }
+                            @if (!coupon.MinOrderAmount.HasValue && !coupon.MinQuantity.HasValue && coupon.OnlyForFirstOrder != true)
+                            {
+                                <span class="text-muted">Không có</span>
+                            }
+                        </td>
+                        <td>
+                            @if (coupon.ExpiryDate.HasValue)
+                            {
+                                var timeLeft = coupon.ExpiryDate.Value - DateTime.Now;
+                                if (isExpired)
+                                {
+                                    <span class="badge bg-danger">Đã hết hạn</span><br/>
+                                    <small>@coupon.ExpiryDate.Value.ToString("dd/MM/yyyy")</small>
+                                }
+                                else if (timeLeft.TotalDays < 7)
+                                {
+                                    <span class="badge bg-warning text-dark">Sắp hết hạn</span><br/>
+                                    <small>@coupon.ExpiryDate.Value.ToString("dd/MM/yyyy")</small>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Còn hạn</span><br/>
+                                    <small>@coupon.ExpiryDate.Value.ToString("dd/MM/yyyy")</small>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Vô thời hạn</span>
+                            }
+                        </td>
+                        <td class="text-start" style="font-size: 0.85rem;">
+                            @if (coupon.UsageLimit.HasValue)
+                            {
+                                <div>🔢 Tổng: <strong>@coupon.UsageLimit</strong></div>
+                            }
+                            @if (coupon.PerUserLimit.HasValue)
+                            {
+                                <div>👤 Mỗi người: <strong>@coupon.PerUserLimit</strong></div>
+                            }
+                            @if (!coupon.UsageLimit.HasValue && !coupon.PerUserLimit.HasValue)
+                            {
+                                <span class="text-muted">Không giới hạn</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!coupon.IsActive)
+                            {
+                                <span class="badge bg-danger">🔒 Vô hiệu hóa</span>
+                            }
+                            else if (isExpired)
+                            {
+                                <span class="badge bg-warning text-dark">⏰ Hết hạn</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">✅ Hoạt động</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group-vertical" role="group">
+                                <!-- Nút Ẩn/Hiện -->
+                                <form asp-action="AnHienCoupon" method="post" class="mb-1">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@coupon.Id" />
+                                    @if (coupon.IsActive)
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-warning w-100">
+                                            <i class="fa fa-eye-slash"></i> Vô hiệu hóa
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-success w-100">
+                                            <i class="fa fa-eye"></i> Kích hoạt
+                                        </button>
+                                    }
+                                </form>
+
+                                <!-- Nút Xóa -->
+                                <form asp-action="XoaCoupon" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@coupon.Id" />
+                                    <button type="submit" class="btn btn-sm btn-danger w-100"
+                                            onclick="return confirm('Bạn có chắc muốn xóa coupon \'@coupon.Code\'?\n\n⚠️ Lưu ý: Không thể xóa nếu coupon đã được sử dụng.')">
+                                        <i class="fa fa-trash"></i> Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="fa fa-ticket fa-3x mb-3"></i>
+                        <p>Chưa có coupon nào trong hệ thống</p>
+                        <a asp-action="TaoCoupon" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Tạo Coupon Đầu Tiên
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+
+    .table-secondary {
+        opacity: 0.7;
+    }
+
+    .badge {
+        font-size: 0.85rem;
+        padding: 0.4em 0.6em;
+    }
+</style>

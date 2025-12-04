@@ -1,0 +1,115 @@
+@model HShop.Data.NhaCungCap
+
+@{
+    ViewData["Title"] = "Thêm Nhà Cung Cấp";
+}
+
+<h1 class="text-primary mb-4">➕ Thêm Nhà Cung Cấp Mới</h1>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form asp-action="ThemNhaCungCap" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Validation Summary -->
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Thông tin cơ bản -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">📋 Thông tin cơ bản</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="MaNcc" class="form-label fw-bold">
+                                        Mã Nhà Cung Cấp <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="MaNcc" class="form-control" placeholder="VD: NCC001" required />
+                                    <span asp-validation-for="MaNcc" class="text-danger"></span>
+                                    <small class="text-muted">Mã duy nhất, không trùng</small>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="TenCongTy" class="form-label fw-bold">
+                                        Tên Công Ty <span class="text-danger">*</span>
+                                    </label>
+                                    <input asp-for="TenCongTy" class="form-control" placeholder="VD: Công ty ABC" required />
+                                    <span asp-validation-for="TenCongTy" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Logo" class="form-label fw-bold">Logo</label>
+                                <input asp-for="Logo" class="form-control" placeholder="Đường dẫn logo hoặc tên file" />
+                                <span asp-validation-for="Logo" class="text-danger"></span>
+                                <small class="text-muted">Tùy chọn: đường dẫn hoặc tên file logo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin liên hệ -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">📞 Thông tin liên hệ</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label fw-bold">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="email@example.com" required />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="DienThoai" class="form-label fw-bold">Điện Thoại</label>
+                                    <input asp-for="DienThoai" type="tel" class="form-control" placeholder="0123456789" />
+                                    <span asp-validation-for="DienThoai" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="NguoiLienLac" class="form-label fw-bold">Người Liên Lạc</label>
+                                    <input asp-for="NguoiLienLac" class="form-control" placeholder="Tên người liên hệ" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="DiaChi" class="form-label fw-bold">Địa Chỉ</label>
+                                <textarea asp-for="DiaChi" class="form-control" rows="2" placeholder="Địa chỉ công ty..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mô tả -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">📝 Mô tả bổ sung</h5>
+                        </div>
+                        <div class="card-body">
+                            <label asp-for="MoTa" class="form-label fw-bold">Mô tả</label>
+                            <textarea asp-for="MoTa" class="form-control" rows="3" placeholder="Thông tin bổ sung về nhà cung cấp..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-action="QuanLyNhaCungCap" class="btn btn-secondary">
+                            <i class="fa fa-times"></i> Hủy
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save"></i> Thêm Nhà Cung Cấp
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

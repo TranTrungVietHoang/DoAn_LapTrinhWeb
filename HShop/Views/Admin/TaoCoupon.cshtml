@@ -1,0 +1,231 @@
+@model HShop.Data.Coupon
+
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Tạo Coupon Mới" : "Sửa Coupon";
+    var isEdit = Model.Id > 0;
+}
+
+<h1 class="text-primary mb-4">
+    @if (isEdit)
+    {
+        <text>✏️ Sửa Coupon: @Model.Code</text>
+    }
+    else
+    {
+        <text>➕ Tạo Coupon Mới</text>
+    }
+</h1>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form asp-action="@(isEdit ? "SuaCoupon" : "TaoCoupon")" method="post">
+                    @Html.AntiForgeryToken()
+                    @if (isEdit)
+                    {
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="CreatedAt" />
+                    }
+
+                    <!-- Validation Summary -->
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Basic Information -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">📋 Thông tin cơ bản</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Code" class="form-label fw-bold">Mã Coupon <span class="text-danger">*</span></label>
+                                    <input asp-for="Code" class="form-control" placeholder="VD: SUMMER2025" required />
+                                    <span asp-validation-for="Code" class="text-danger"></span>
+                                    <small class="text-muted">Chỉ chữ cái, số, không dấu, không khoảng trắng</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Priority" class="form-label fw-bold">Độ ưu tiên</label>
+                                    <input asp-for="Priority" type="number" class="form-control" min="0" value="0" />
+                                    <small class="text-muted">Số càng nhỏ càng ưu tiên cao</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label fw-bold">Mô tả</label>
+                                <textarea asp-for="Description" class="form-control" rows="2" placeholder="Mô tả ngắn về coupon này..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="CouponType" class="form-label fw-bold">Loại Coupon</label>
+                                <select asp-for="CouponType" class="form-select">
+                                    <option value="order">Order (Áp dụng cho đơn hàng)</option>
+                                    <option value="product">Product (Áp dụng cho sản phẩm cụ thể)</option>
+                                    <option value="shipping">Shipping (Miễn phí vận chuyển)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discount Settings -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">💰 Cấu hình giảm giá</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <i class="fa fa-info-circle"></i> <strong>Lưu ý:</strong> Chỉ chọn một trong hai: giảm theo % HOẶC giảm theo tiền cố định
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="DiscountPercent" class="form-label fw-bold">Giảm giá theo % (0-100)</label>
+                                    <div class="input-group">
+                                        <input asp-for="DiscountPercent" type="number" class="form-control" min="0" max="100" step="0.01" id="discountPercent" />
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="DiscountAmount" class="form-label fw-bold">Giảm giá cố định (VNĐ)</label>
+                                    <div class="input-group">
+                                        <input asp-for="DiscountAmount" type="number" class="form-control" min="0" step="1000" id="discountAmount" />
+                                        <span class="input-group-text">đ</span>
+                                    </div>
+                                    <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="MaxDiscount" class="form-label fw-bold">Giảm tối đa (VNĐ)</label>
+                                    <div class="input-group">
+                                        <input asp-for="MaxDiscount" type="number" class="form-control" min="0" step="1000" />
+                                        <span class="input-group-text">đ</span>
+                                    </div>
+                                    <small class="text-muted">Chỉ áp dụng khi giảm theo %</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conditions -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">⚙️ Điều kiện áp dụng</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="MinOrderAmount" class="form-label fw-bold">Giá trị đơn hàng tối thiểu</label>
+                                    <div class="input-group">
+                                        <input asp-for="MinOrderAmount" type="number" class="form-control" min="0" step="1000" />
+                                        <span class="input-group-text">đ</span>
+                                    </div>
+                                    <small class="text-muted">Để trống nếu không có giới hạn</small>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="MinQuantity" class="form-label fw-bold">Số lượng sản phẩm tối thiểu</label>
+                                    <input asp-for="MinQuantity" type="number" class="form-control" min="0" />
+                                    <small class="text-muted">Để trống nếu không có giới hạn</small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="RequiredProductId" class="form-label fw-bold">Yêu cầu sản phẩm (ID)</label>
+                                    <input asp-for="RequiredProductId" type="number" class="form-control" min="0" />
+                                    <small class="text-muted">Chỉ áp dụng khi có sản phẩm cụ thể trong giỏ</small>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-check mt-4">
+                                        <input asp-for="OnlyForFirstOrder" class="form-check-input" type="checkbox" />
+                                        <label asp-for="OnlyForFirstOrder" class="form-check-label fw-bold">
+                                            🔰 Chỉ dành cho đơn hàng đầu tiên
+                                        </label>
+                                        <br/>
+                                        <small class="text-muted">Khách hàng chỉ được sử dụng cho đơn đầu tiên</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Limits & Expiry -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">🔢 Giới hạn & Thời hạn</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="UsageLimit" class="form-label fw-bold">Giới hạn tổng số lượt sử dụng</label>
+                                    <input asp-for="UsageLimit" type="number" class="form-control" min="0" />
+                                    <small class="text-muted">Để trống = không giới hạn</small>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="PerUserLimit" class="form-label fw-bold">Giới hạn mỗi khách hàng</label>
+                                    <input asp-for="PerUserLimit" type="number" class="form-control" min="0" />
+                                    <small class="text-muted">Mỗi người chỉ được dùng tối đa X lần</small>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label asp-for="ExpiryDate" class="form-label fw-bold">Ngày hết hạn</label>
+                                    <input asp-for="ExpiryDate" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                                    <small class="text-muted">Để trống = vô thời hạn</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">🎯 Trạng thái</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" id="isActiveSwitch" />
+                                <label class="form-check-label fw-bold" for="isActiveSwitch">
+                                    ✅ Kích hoạt coupon (cho phép khách hàng sử dụng)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a asp-action="QuanLyCoupon" class="btn btn-secondary">
+                            <i class="fa fa-times"></i> Hủy
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save"></i> @(isEdit ? "Cập nhật" : "Tạo Coupon")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Validation: không cho phép cả % và tiền cùng lúc
+        document.getElementById('discountPercent').addEventListener('input', function() {
+            if (this.value > 0) {
+                document.getElementById('discountAmount').value = '';
+            }
+        });
+
+        document.getElementById('discountAmount').addEventListener('input', function() {
+            if (this.value > 0) {
+                document.getElementById('discountPercent').value = 0;
+            }
+        });
+    </script>
+}

@@ -1,0 +1,179 @@
+@model IEnumerable<HShop.Data.NhaCungCap>
+
+@{
+    ViewData["Title"] = "Quản lý Nhà Cung Cấp";
+    var productCounts = ViewBag.ProductCounts as Dictionary<string, int>;
+}
+
+<h1 class="text-primary mb-4">🏢 Quản lý Nhà Cung Cấp</h1>
+
+<!-- Thông báo -->
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<!-- Thống kê -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">Tổng Nhà Cung Cấp</h5>
+                <h2 class="display-4">@Model.Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5 class="card-title text-success">Có Sản Phẩm</h5>
+                @{
+                    var suppliersWithProducts = productCounts?.Count(p => p.Value > 0) ?? 0;
+                }
+                <h2 class="display-4">@suppliersWithProducts</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nút thêm mới -->
+<div class="mb-3">
+    <a asp-action="ThemNhaCungCap" class="btn btn-success">
+        <i class="fa fa-plus"></i> Thêm Nhà Cung Cấp Mới
+    </a>
+</div>
+
+<!-- Bảng danh sách -->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover text-center align-middle shadow-sm">
+        <thead class="table-primary">
+            <tr>
+                <th>Mã NCC</th>
+                <th>Tên Công Ty</th>
+                <th>Email</th>
+                <th>Điện Thoại</th>
+                <th>Người Liên Lạc</th>
+                <th>Địa Chỉ</th>
+                <th>Số SP</th>
+                <th>Thao Tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Any())
+            {
+                @foreach (var ncc in Model)
+                {
+                    var productCount = productCounts?.ContainsKey(ncc.MaNcc) == true ? productCounts[ncc.MaNcc] : 0;
+                    
+                    <tr>
+                        <td><strong class="text-primary">@ncc.MaNcc</strong></td>
+                        <td>
+                            <strong>@ncc.TenCongTy</strong>
+                            @if (!string.IsNullOrEmpty(ncc.Logo))
+                            {
+                                <br/><small class="text-muted">Logo: @ncc.Logo</small>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(ncc.Email))
+                            {
+                                <a href="mailto:@ncc.Email">@ncc.Email</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(ncc.DienThoai))
+                            {
+                                <a href="tel:@ncc.DienThoai">@ncc.DienThoai</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(ncc.NguoiLienLac))
+                            {
+                                @ncc.NguoiLienLac
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td class="text-start" style="max-width: 200px;">
+                            @if (!string.IsNullOrEmpty(ncc.DiaChi))
+                            {
+                                if (ncc.DiaChi.Length > 50)
+                                {
+                                    @ncc.DiaChi.Substring(0, 50)<text>...</text>
+                                }
+                                else
+                                {
+                                    @ncc.DiaChi
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (productCount > 0)
+                            {
+                                <span class="badge bg-info">@productCount SP</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">0 SP</span>
+                            }
+                        </td>
+                        <td>
+                            <!-- Nút Xóa -->
+                            <form asp-action="XoaNhaCungCap" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@ncc.MaNcc" />
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Bạn có chắc muốn xóa nhà cung cấp \'@ncc.TenCongTy\'?\n\n⚠️ Lưu ý: Không thể xóa nếu nhà cung cấp có sản phẩm.')">
+                                    <i class="fa fa-trash"></i> Xóa
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="fa fa-building fa-3x mb-3"></i>
+                        <p>Chưa có nhà cung cấp nào trong hệ thống</p>
+                        <a asp-action="ThemNhaCungCap" class="btn btn-primary">
+                            <i class="fa fa-plus"></i> Thêm Nhà Cung Cấp Đầu Tiên
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+</style>
