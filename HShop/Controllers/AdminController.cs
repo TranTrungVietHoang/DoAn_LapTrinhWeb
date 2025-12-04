@@ -384,5 +384,389 @@ namespace HShop.Controllers
 
             return RedirectToAction(nameof(QuanLyBinhLuan));
         }
+
+        // ====================================================================
+        // ✅ QUẢN LÝ COUPON
+        // ====================================================================
+
+        // ✅ Xem danh sách coupons
+        public IActionResult QuanLyCoupon()
+        {
+            try
+            {
+                var coupons = _db.Coupons
+                    .AsNoTracking()
+                    .OrderByDescending(c => c.Id)
+                    .ToList();
+
+                return View(coupons);
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi để debug
+                Console.WriteLine($"ERROR in QuanLyCoupon: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                
+                // Trả về empty list để không crash
+                return View(new List<Coupon>());
+            }
+        }
+
+        // ✅ Form tạo coupon mới (GET)
+        [HttpGet]
+        public IActionResult TaoCoupon()
+        {
+            var model = new Coupon
+            {
+                IsActive = true,
+                CreatedAt = DateTime.Now,
+                Priority = 0
+            };
+            return View(model);
+        }
+
+        // ✅ Xử lý tạo coupon (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult TaoCoupon(Coupon coupon)
+        {
+            // Validate unique code
+            if (_db.Coupons.Any(c => c.Code == coupon.Code))
+            {
+                ModelState.AddModelError("Code", "Mã coupon này đã tồn tại.");
+            }
+
+            // Validate discount values
+            if (coupon.DiscountPercent <= 0 && (!coupon.DiscountAmount.HasValue || coupon.DiscountAmount <= 0))
+            {
+                ModelState.AddModelError("", "Phải có ít nhất một trong hai: Giảm giá theo % hoặc theo tiền.");
+            }
+
+            if (coupon.DiscountPercent > 0 && coupon.DiscountAmount.HasValue && coupon.DiscountAmount > 0)
+            {
+                ModelState.AddModelError("", "Không thể có cả giảm giá theo % và theo tiền cùng lúc.");
+            }
+
+            if (coupon.DiscountPercent < 0 || coupon.DiscountPercent > 100)
+            {
+                ModelState.AddModelError("DiscountPercent", "Giảm giá phải từ 0 đến 100%.");
+            }
+
+            // Validate expiry date
+            if (coupon.ExpiryDate.HasValue && coupon.ExpiryDate < DateTime.Now)
+            {
+                ModelState.AddModelError("ExpiryDate", "Ngày hết hạn phải là ngày trong tương lai.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(coupon);
+            }
+
+            try
+            {
+                coupon.CreatedAt = DateTime.Now;
+                _db.Coupons.Add(coupon);
+                _db.SaveChanges();
+
+                TempData["Success"] = $"✅ Đã tạo coupon '{coupon.Code}' thành công!";
+                return RedirectToAction(nameof(QuanLyCoupon));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"❌ Lỗi khi tạo coupon: {ex.Message}";
+                return View(coupon);
+            }
+        }
+
+        // ✅ Form sửa coupon (GET)
+        [HttpGet]
+        public IActionResult SuaCoupon(int id)
+        {
+            var coupon = _db.Coupons.Find(id);
+            if (coupon == null)
+            {
+                TempData["Error"] = "Không tìm thấy coupon.";
+                return RedirectToAction(nameof(QuanLyCoupon));
+            }
+
+            return View("TaoCoupon", coupon);
+        }
+
+        // ✅ Xử lý sửa coupon (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SuaCoupon(Coupon coupon)
+        {
+            var existing = _db.Coupons.Find(coupon.Id);
+            if (existing == null)
+            {
+                TempData["Error"] = "Không tìm thấy coupon cần sửa.";
+                return RedirectToAction(nameof(QuanLyCoupon));
+            }
+
+            // Validate unique code (except current coupon)
+            if (_db.Coupons.Any(c => c.Code == coupon.Code && c.Id != coupon.Id))
+            {
+                ModelState.AddModelError("Code", "Mã coupon này đã tồn tại.");
+            }
+
+            // Validate discount values
+            if (coupon.DiscountPercent <= 0 && (!coupon.DiscountAmount.HasValue || coupon.DiscountAmount <= 0))
+            {
+                ModelState.AddModelError("", "Phải có ít nhất một trong hai: Giảm giá theo % hoặc theo tiền.");
+            }
+
+            if (coupon.DiscountPercent > 0 && coupon.DiscountAmount.HasValue && coupon.DiscountAmount > 0)
+            {
+                ModelState.AddModelError("", "Không thể có cả giảm giá theo % và theo tiền cùng lúc.");
+            }
+
+            if (coupon.DiscountPercent < 0 || coupon.DiscountPercent > 100)
+            {
+                ModelState.AddModelError("DiscountPercent", "Giảm giá phải từ 0 đến 100%.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View("TaoCoupon", coupon);
+            }
+
+            try
+            {
+                // Update fields
+                existing.Code = coupon.Code;
+                existing.Description = coupon.Description;
+                existing.DiscountPercent = coupon.DiscountPercent;
+                existing.DiscountAmount = coupon.DiscountAmount;
+                existing.MaxDiscount = coupon.MaxDiscount;
+                existing.MinOrderAmount = coupon.MinOrderAmount;
+                existing.MinQuantity = coupon.MinQuantity;
+                existing.ExpiryDate = coupon.ExpiryDate;
+                existing.IsActive = coupon.IsActive;
+                existing.OnlyForFirstOrder = coupon.OnlyForFirstOrder;
+                existing.RequiredProductId = coupon.RequiredProductId;
+                existing.UsageLimit = coupon.UsageLimit;
+                existing.PerUserLimit = coupon.PerUserLimit;
+                existing.CouponType = coupon.CouponType;
+                existing.Priority = coupon.Priority;
+
+                _db.SaveChanges();
+
+                TempData["Success"] = $"✅ Đã cập nhật coupon '{coupon.Code}' thành công!";
+                return RedirectToAction(nameof(QuanLyCoupon));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"❌ Lỗi khi cập nhật coupon: {ex.Message}";
+                return View("TaoCoupon", coupon);
+            }
+        }
+
+        // ✅ Xóa coupon
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XoaCoupon(int id)
+        {
+            try
+            {
+                var coupon = _db.Coupons.Find(id);
+                if (coupon == null)
+                {
+                    TempData["Error"] = "Không tìm thấy coupon cần xóa.";
+                    return RedirectToAction(nameof(QuanLyCoupon));
+                }
+
+                // Check if coupon has been used
+                var hasHistory = _db.CouponHistories.Any(h => h.CouponCode == coupon.Code);
+                if (hasHistory)
+                {
+                    TempData["Error"] = $"⚠️ Không thể xóa coupon '{coupon.Code}' vì đã có khách hàng sử dụng. Bạn có thể ẩn coupon thay vì xóa.";
+                    return RedirectToAction(nameof(QuanLyCoupon));
+                }
+
+                _db.Coupons.Remove(coupon);
+                _db.SaveChanges();
+
+                TempData["Success"] = $"🗑️ Đã xóa coupon '{coupon.Code}' thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"❌ Lỗi khi xóa coupon: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(QuanLyCoupon));
+        }
+
+        // ✅ Ẩn/Hiện coupon (toggle IsActive)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult AnHienCoupon(int id)
+        {
+            try
+            {
+                var coupon = _db.Coupons.Find(id);
+                if (coupon == null)
+                {
+                    TempData["Error"] = "Không tìm thấy coupon.";
+                    return RedirectToAction(nameof(QuanLyCoupon));
+                }
+
+                coupon.IsActive = !coupon.IsActive;
+                _db.SaveChanges();
+
+                TempData["Success"] = coupon.IsActive
+                    ? $"✅ Đã kích hoạt coupon '{coupon.Code}'!"
+                    : $"🔒 Đã vô hiệu hóa coupon '{coupon.Code}'!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"❌ Lỗi khi thay đổi trạng thái: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(QuanLyCoupon));
+        }
+
+        // ✅ Xem lịch sử sử dụng coupon
+        public IActionResult LichSuCoupon()
+        {
+            var history = _db.CouponHistories
+                .OrderByDescending(h => h.UsedDate)
+                .ToList();
+
+            // Join với KhachHang để lấy thông tin
+            var historyWithCustomer = history.Select(h => new
+            {
+                History = h,
+                Customer = _db.KhachHangs.FirstOrDefault(k => k.MaKh == h.CustomerId)
+            }).ToList();
+
+            ViewBag.HistoryWithCustomer = historyWithCustomer;
+
+            return View(history);
+        }
+
+        // ✅ Xem chi tiết sử dụng coupon (chỉ bảng)
+        public IActionResult ChiTietSuDungCoupon()
+        {
+            var history = _db.CouponHistories
+                .OrderByDescending(h => h.UsedDate)
+                .ToList();
+
+            // Debug: Log số lượng records
+            Console.WriteLine($"DEBUG: Found {history.Count} coupon history records");
+            foreach (var h in history.Take(5))
+            {
+                Console.WriteLine($"  - ID: {h.Id}, Code: {h.CouponCode}, OrderId: {h.OrderId}, CustomerId: {h.CustomerId}");
+            }
+
+            // Join với KhachHang để lấy thông tin
+            var historyWithCustomer = history.Select(h => new
+            {
+                History = h,
+                Customer = _db.KhachHangs.FirstOrDefault(k => k.MaKh == h.CustomerId)
+            }).ToList();
+
+            ViewBag.HistoryWithCustomer = historyWithCustomer;
+
+            return View(history);
+        }
+
+        // ====================================================================
+        // ✅ QUẢN LÝ NHÀ CUNG CẤP
+        // ====================================================================
+
+        // ✅ Xem danh sách nhà cung cấp
+        public IActionResult QuanLyNhaCungCap()
+        {
+            var suppliers = _db.NhaCungCaps
+                .OrderBy(n => n.TenCongTy)
+                .ToList();
+
+            // Tính số sản phẩm cho mỗi nhà cung cấp
+            var productCounts = new Dictionary<string, int>();
+            foreach (var supplier in suppliers)
+            {
+                var count = _db.HangHoas.Count(h => h.MaNcc == supplier.MaNcc);
+                productCounts[supplier.MaNcc] = count;
+            }
+
+            ViewBag.ProductCounts = productCounts;
+
+            return View(suppliers);
+        }
+
+        // ✅ Form thêm nhà cung cấp (GET)
+        [HttpGet]
+        public IActionResult ThemNhaCungCap()
+        {
+            return View(new NhaCungCap());
+        }
+
+        // ✅ Xử lý thêm nhà cung cấp (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ThemNhaCungCap(NhaCungCap ncc)
+        {
+            // Validate unique MaNcc
+            if (_db.NhaCungCaps.Any(n => n.MaNcc == ncc.MaNcc))
+            {
+                ModelState.AddModelError("MaNcc", "Mã nhà cung cấp này đã tồn tại.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View(ncc);
+            }
+
+            try
+            {
+                _db.NhaCungCaps.Add(ncc);
+                _db.SaveChanges();
+
+                TempData["Success"] = $"✅ Đã thêm nhà cung cấp '{ncc.TenCongTy}' thành công!";
+                return RedirectToAction(nameof(QuanLyNhaCungCap));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"❌ Lỗi khi thêm nhà cung cấp: {ex.Message}";
+                return View(ncc);
+            }
+        }
+
+        // ✅ Xóa nhà cung cấp
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult XoaNhaCungCap(string id)
+        {
+            try
+            {
+                var ncc = _db.NhaCungCaps.Find(id);
+                if (ncc == null)
+                {
+                    TempData["Error"] = "Không tìm thấy nhà cung cấp cần xóa.";
+                    return RedirectToAction(nameof(QuanLyNhaCungCap));
+                }
+
+                // Check if supplier has products
+                var hasProducts = _db.HangHoas.Any(h => h.MaNcc == id);
+                if (hasProducts)
+                {
+                    TempData["Error"] = $"⚠️ Không thể xóa nhà cung cấp '{ncc.TenCongTy}' vì đã có sản phẩm liên kết.";
+                    return RedirectToAction(nameof(QuanLyNhaCungCap));
+                }
+
+                _db.NhaCungCaps.Remove(ncc);
+                _db.SaveChanges();
+
+                TempData["Success"] = $"🗑️ Đã xóa nhà cung cấp '{ncc.TenCongTy}' thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"❌ Lỗi khi xóa nhà cung cấp: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(QuanLyNhaCungCap));
+        }
     }
 }

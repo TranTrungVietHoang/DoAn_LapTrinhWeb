@@ -23,7 +23,7 @@ public partial class Coupon
 
     public int? MinQuantity { get; set; }
 
-    public bool? OnlyForFirstOrder { get; set; }
+    public bool OnlyForFirstOrder { get; set; }
 
     public int? RequiredProductId { get; set; }
 
