@@ -1,2 +1,4 @@
 Do An thuc hien boi:
-Tran Trung Viet Hoang va Phan Dang Huy
+Tran Trung Viet Hoang 
+Phan Dang Huy
+Ngo Gia Huy
