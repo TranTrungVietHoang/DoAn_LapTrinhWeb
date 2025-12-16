@@ -5,17 +5,17 @@
 }
 
 <div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6">Checkout</h1>
+    <h1 class="text-center text-white display-6">Thanh Toán</h1>
     <ol class="breadcrumb justify-content-center mb-0">
-        <li class="breadcrumb-item"><a href="#">Home</a></li>
-        <li class="breadcrumb-item"><a href="#">Pages</a></li>
-        <li class="breadcrumb-item active text-white">Checkout</li>
+        <li class="breadcrumb-item"><a href="#">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="#">Trang</a></li>
+        <li class="breadcrumb-item active text-white">Thanh toán</li>
     </ol>
 </div>
 
 <div class="container-fluid py-5">
     <div class="container py-5">
-        <h1 class="mb-4">Billing details</h1>
+        <h1 class="mb-4">Thông tin thanh toán</h1>
 
         <!-- Validation Errors -->
         @if (!ViewData.ModelState.IsValid)
@@ -92,11 +92,11 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Products</th>
-                                    <th>Name</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Total</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Tên</th>
+                                    <th>Giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Tổng</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,7 +121,7 @@
                                 <!-- Tổng sau giảm -->
                                 <tr>
                                     <td></td>
-                                    <td class="py-5"><p class="mb-0 text-dark text-uppercase py-3">TOTAL</p></td>
+                                    <td class="py-5"><p class="mb-0 text-dark text-uppercase py-3">TỔNG CỘNG</p></td>
                                     <td></td>
                                     <td></td>
                                     <td class="py-5">
@@ -145,7 +145,7 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td class="py-5"><p class="mb-0 text-success py-3">Discount</p></td>
+                                        <td class="py-5"><p class="mb-0 text-success py-3">Giảm giá</p></td>
                                         <td class="py-5">
                                             <div class="py-3 border-bottom border-top">
                                                 <p class="mb-0 text-success">
@@ -158,21 +158,21 @@
 
                                 <tr>
                                     <td></td>
-                                    <td class="py-5"><p class="mb-0 text-dark py-4">Shipping</p></td>
+                                    <td class="py-5"><p class="mb-0 text-dark py-4">Vận chuyển</p></td>
                                     <td colspan="3" class="py-5">
                                         <div class="form-check text-start">
                                             <input type="checkbox" class="form-check-input bg-primary border-0">
-                                            <label class="form-check-label">Free Shipping</label>
+                                            <label class="form-check-label">Miễn phí vận chuyển</label>
                                         </div>
 
                                         <div class="form-check text-start">
                                             <input type="checkbox" class="form-check-input bg-primary border-0">
-                                            <label class="form-check-label">Flat rate: $15.00</label>
+                                            <label class="form-check-label">Cố định: 15.000đ</label>
                                         </div>
 
                                         <div class="form-check text-start">
                                             <input type="checkbox" class="form-check-input bg-primary border-0">
-                                            <label class="form-check-label">Local Pickup: $8.00</label>
+                                            <label class="form-check-label">Nhận tại cửa hàng: 8.000đ</label>
                                         </div>
                                     </td>
                                 </tr>
@@ -180,7 +180,7 @@
                                 <tr>
                                     <td></td>
                                     <td class="py-5">
-                                        <p class="mb-0 text-dark text-uppercase py-3">TOTAL</p>
+                                        <p class="mb-0 text-dark text-uppercase py-3">TỔNG CỘNG</p>
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -209,10 +209,10 @@
                         <div class="col-12">
                             <div class="form-check text-start my-3">
                                 <input type="checkbox" class="form-check-input bg-primary border-0">
-                                <label class="form-check-label">Direct Bank Transfer</label>
+                                <label class="form-check-label">Chuyển khoản ngân hàng</label>
                             </div>
                             <p class="text-start text-dark">
-                                Make your payment directly into our bank account.
+                                Thực hiện thanh toán trực tiếp vào tài khoản ngân hàng của chúng tôi.
                             </p>
                         </div>
                     </div>
@@ -221,7 +221,7 @@
                         <div class="col-12">
                             <div class="form-check text-start my-3">
                                 <input type="checkbox" class="form-check-input bg-primary border-0">
-                                <label class="form-check-label">Check Payments</label>
+                                <label class="form-check-label">Thanh toán bằng séc</label>
                             </div>
                         </div>
                     </div>
@@ -230,7 +230,7 @@
                         <div class="col-12">
                             <div class="form-check text-start my-3">
                                 <input type="checkbox" class="form-check-input bg-primary border-0">
-                                <label class="form-check-label">Cash On Delivery</label>
+                                <label class="form-check-label">Thanh toán khi nhận hàng (COD)</label>
                             </div>
                         </div>
                     </div>
@@ -249,7 +249,7 @@
                         <button type="submit"
                                 class="btn border-secondary py-3 px-4 text-uppercase w-100 text-primary"
                                 onclick="document.getElementById('paymentMethod').value='COD'; return true;">
-                            Place Order
+                            Đặt hàng
                         </button>
                     </div>
 

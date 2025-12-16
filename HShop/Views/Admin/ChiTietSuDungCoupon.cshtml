@@ -14,17 +14,6 @@
     </a>
 </div>
 
-<!-- DEBUG INFO -->
-<div class="alert alert-info">
-    <strong>DEBUG:</strong><br/>
-    Model Count: @Model?.Count() ?? 0<br/>
-    ViewBag Data: @(historyData != null ? historyData.Count.ToString() : "NULL")<br/>
-    @if (Model != null && Model.Any())
-    {
-        <span>First record: ID=@Model.First().Id, Code=@Model.First().CouponCode, OrderId=@Model.First().OrderId</span>
-    }
-</div>
-
 <!-- Bảng lịch sử chi tiết -->
 <div class="card shadow-sm">
     <div class="card-body">
