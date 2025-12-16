@@ -1,11 +1,11 @@
 ﻿@model HShop.ViewModels.ChiTietHangHoaVM
 @{
-    ViewData["Title"] = "Detail";
+    ViewData["Title"] = "Chi Tiết Sản Phẩm";
 }
 
 <!-- Single Page Header start -->
 <div class="container-fluid page-header py-5">
-    <h1 class="text-center text-white display-6">Shop Detail</h1>
+    <h1 class="text-center text-white display-6">Chi Tiết Sản Phẩm</h1>
     <ol class="breadcrumb justify-content-center mb-0">
         <li class="breadcrumb-item"><a href="#">Home</a></li>
         <li class="breadcrumb-item"><a href="#">Hàng hóa</a></li>
@@ -29,7 +29,7 @@
                     </div>
                     <div class="col-lg-6">
                         <h4 class="fw-bold mb-3">@Model.TenHH</h4>
-                        <p class="mb-3">Category: @Model.TenLoai</p>
+                        <p class="mb-3">Danh mục: @Model.TenLoai</p>
                         <h5 class="fw-bold mb-3">$ @Model.DonGia</h5>
                         <div class="d-flex align-items-center mb-4">
                             @for (int i = 1; i <= 5; i++)
@@ -237,7 +237,7 @@
 
                     
                     <div class="col-lg-12">
-                        <h4 class="mb-4 fw-bold">Featured products</h4>
+                        <h4 class="mb-4 fw-bold">Sản phẩm nổi bật</h4>
 
                         @if (ViewBag.FeaturedProducts != null)
                         {
@@ -260,18 +260,11 @@
                         }
 
                         <div class="d-flex justify-content-center my-4">
-                            <a href="/HangHoa" class="btn border border-secondary px-4 py-3 rounded-pill text-primary w-100">View More</a>
+                            <a href="/HangHoa" class="btn border border-secondary px-4 py-3 rounded-pill text-primary w-100">Xem thêm</a>
                         </div>
                     </div>
 
-                    <div class="col-lg-12">
-                        <div class="position-relative">
-                            <img src="img/banner-fruits.jpg" class="img-fluid w-100 rounded" alt="">
-                            <div class="position-absolute" style="top: 50%; right: 10px; transform: translateY(-50%);">
-                                <h3 class="text-secondary fw-bold">Fresh <br> Fruits <br> Banner</h3>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
             <!-- End Sidebar -->
